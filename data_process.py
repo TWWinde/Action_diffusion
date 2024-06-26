@@ -18,6 +18,9 @@ def read_videos_and_step_start_end(root_path):
         video_type = video_names.split('_')[0:1]
         vid_path.append(os.path.join(root_path, video_type, 'videos', video_names + '.mpg'))
 
+    print(csv_path)
+
+    print(vid_path)
     return csv_path, vid_path
 
 
