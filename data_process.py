@@ -24,7 +24,9 @@ def read_videos_and_step_start_end(root_path):
 
 
 def read_csv(path):
-    df = pd.read_csv(path)
+    column_names = ['Action', 'Start', 'End']
+    df = pd.read_csv(path, header=None, names=column_names)
+
 
     print(df)
 
