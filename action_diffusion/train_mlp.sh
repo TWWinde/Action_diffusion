@@ -1,0 +1,17 @@
+python3 train_mlp.py \
+--multiprocessing-distributed \
+--num_thread_reader 8 \
+--cudnn_benchmark 1 \
+--pin_memory \
+--checkpoint_dir whl \
+--batch_size 256 \
+--batch_size_val 256 \
+--evaluate \
+--dataset crosstask \
+--resume \
+--horizon 3 \
+--action_dim 105 \
+--class_dim 18 \
+--observation_dim 1536 \
+--json_path_val dataset/crosstask/crosstask_release/test_split_T3.json \
+--json_path_train dataset/crosstask/crosstask_release/train_split_T3.json

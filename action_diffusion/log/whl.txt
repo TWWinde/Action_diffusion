@@ -1,0 +1,53 @@
+=> no checkpoint found at 'True'
+Starting training loop for rank: 0, total batch size: 256
+=> no checkpoint found at 'True'
+Starting training loop for rank: 0, total batch size: 256
+=> no checkpoint found at 'True'
+Starting training loop for rank: 0, total batch size: 256
+=> no checkpoint found at 'True'
+Starting training loop for rank: 0, total batch size: 256
+=> loading checkpoint '/home/lei/ActionDiffusion/checkpoint_mlp/whl/epoch0001.pth.tar'
+=> loaded checkpoint '/home/lei/ActionDiffusion/checkpoint_mlp/whl/epoch0001.pth.tar' (epoch 1)0
+Starting training loop for rank: 0, total batch size: 256
+=> loading checkpoint '/home/lei/ActionDiffusion/checkpoint_mlp/whl/epoch0007.pth.tar'
+=> loaded checkpoint '/home/lei/ActionDiffusion/checkpoint_mlp/whl/epoch0007.pth.tar' (epoch 7)0
+Starting training loop for rank: 0, total batch size: 256
+=> loading checkpoint '/home/lei/ActionDiffusion/checkpoint_mlp/whl/epoch0011.pth.tar'
+=> loaded checkpoint '/home/lei/ActionDiffusion/checkpoint_mlp/whl/epoch0011.pth.tar' (epoch 11)0
+Starting training loop for rank: 0, total batch size: 256
+=> loading checkpoint '/home/lei/ActionDiffusion/checkpoint_mlp/whl/epoch0023.pth.tar'
+=> loaded checkpoint '/home/lei/ActionDiffusion/checkpoint_mlp/whl/epoch0023.pth.tar' (epoch 23)0
+Starting training loop for rank: 0, total batch size: 256
+=> loading checkpoint '/home/lei/ActionDiffusion/checkpoint_mlp/whl/epoch0073.pth.tar'
+=> loaded checkpoint '/home/lei/ActionDiffusion/checkpoint_mlp/whl/epoch0073.pth.tar' (epoch 73)0
+Starting training loop for rank: 0, total batch size: 256
+=> loading checkpoint '/home/lei/ActionDiffusion/checkpoint_mlp/whl/epoch0076.pth.tar'
+=> loaded checkpoint '/home/lei/ActionDiffusion/checkpoint_mlp/whl/epoch0076.pth.tar' (epoch 76)0
+Starting training loop for rank: 0, total batch size: 256
+=> loading checkpoint '/home/lei/ActionDiffusion/checkpoint_mlp/whl/epoch0080.pth.tar'
+=> loaded checkpoint '/home/lei/ActionDiffusion/checkpoint_mlp/whl/epoch0080.pth.tar' (epoch 80)0
+Starting training loop for rank: 0, total batch size: 256
+=> no checkpoint found at 'True'
+Starting training loop for rank: 0, total batch size: 256
+=> no checkpoint found at 'True'
+Starting training loop for rank: 0, total batch size: 256
+=> no checkpoint found at 'True'
+Starting training loop for rank: 0, total batch size: 256
+=> no checkpoint found at 'True'
+Starting training loop for rank: 0, total batch size: 256
+=> no checkpoint found at 'True'
+Starting training loop for rank: 0, total batch size: 256
+=> no checkpoint found at 'True'
+Starting training loop for rank: 0, total batch size: 256
+=> no checkpoint found at 'True'
+Starting training loop for rank: 0, total batch size: 256
+=> no checkpoint found at 'True'
+Starting training loop for rank: 0, total batch size: 256
+=> no checkpoint found at 'True'
+Starting training loop for rank: 0, total batch size: 256
+=> no checkpoint found at 'True'
+Starting training loop for rank: 0, total batch size: 256
+=> no checkpoint found at 'True'
+Starting training loop for rank: 0, total batch size: 256
+=> no checkpoint found at 'True'
+Starting training loop for rank: 0, total batch size: 256
