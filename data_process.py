@@ -84,7 +84,7 @@ def get_csv_path_from_video_path(path):
 def get_srt_path_from_video_path(path):
     file_name = os.path.basename(path)
     file_name = file_name.split('.')[0]
-    root_path = file_name.split('videos')[0]
+    root_path = path.split('videos')[0]
 
     srt = os.path.join(root_path, 'subtitles', 'manual', file_name + '.srt')
     print(srt)
