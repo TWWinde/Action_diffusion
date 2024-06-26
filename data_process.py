@@ -1,9 +1,8 @@
 import glob
 import os
 import re
-
+from datetime import datetime
 from moviepy.editor import VideoFileClip
-
 import pandas as pd
 
 
@@ -30,7 +29,14 @@ def parse_srt(file_path):
     return subtitles
 
 
+def time_str_to_seconds(time_str):
+    time_obj = datetime.strptime(time_str, '%H:%M:%S,%f')
+    return time_obj.hour * 3600 + time_obj.minute * 60 + time_obj.second + time_obj.microsecond / 1000000
+
+
 def get_subtitles_in_time_range(subtitles, start_time, end_time):
+    start_seconds = time_str_to_seconds(start_time)
+    end_seconds = time_str_to_seconds(end_time)
 
     result = []
     for subtitle in subtitles:
@@ -112,7 +118,10 @@ if __name__ == '__main__':
     for video_path in video_paths:
         csv_path = get_csv_path_from_video_path(video_path)
         srt_path = get_srt_path_from_video_path(video_path)
-        a = parse_srt(srt_path)
-        print(a)
+        df = read_csv(csv_path)
+        print(df)
+
+       # a = parse_srt(srt_path)
+        #print(a)
 
 
