@@ -87,6 +87,7 @@ def get_srt_path_from_video_path(path):
     root_path = file_name.split('videos')[0]
 
     srt = os.path.join(root_path, 'subtitles', 'manual', file_name + '.srt')
+    print(srt)
 
     return srt
 
