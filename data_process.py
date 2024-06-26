@@ -22,4 +22,4 @@ def read_videos_and_step_start_end(root_path):
 
 
 if __name__ =='__main__':
-    read_videos_and_step_start_end()
+    read_videos_and_step_start_end('/scratch/users/tang/data/niv')
