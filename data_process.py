@@ -141,7 +141,7 @@ if __name__ == '__main__':
                 extracted_text = get_subtitles_in_time_range(subtitles, start_seconds, end_seconds)
                 video = get_video_clip(video_path, start_seconds, end_seconds)
                 video_array = video_to_array(video)
-                print(video.shape)
+                print(video_array.shape)
                 print(f"Action: {action}")
                 print(f"Start: {start_seconds} seconds")
                 print(f"End: {end_seconds} seconds")
