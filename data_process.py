@@ -108,17 +108,34 @@ def read_csv(path):
 
 def get_video_clip(path, start, end):
     video = VideoFileClip(path)
+    fps = video.fps
+    start_frame, end_frame = int(start*fps), int(end*fps)
     #print(f"Original video size: {video.size}")
     #print(f"Video FPS: {video.fps}")
     #print(start, end)
-    cropped_video = video.subclip(start, end)
-    frames = []
+    start_clip, end_clip = [], []
 
-    for frame in cropped_video.iter_frames():
-        frames.append(frame)
+    for i, frame in enumerate(video.iter_frames()):
+        if start_frame-2 <= i <= start_frame+1:
+            start_clip.append(frame)
+        elif end_frame-1 <= i <= end_frame+2:
+            end_clip.append(frame)
 
-    video_array = np.array(frames)
-    return video_array, video.fps
+    return np.array(start_clip), np.array(end_clip)
+
+
+def preprocess_frames(video_array, target_size=(224, 224)):
+    video_array = video_array / 255.0
+    preprocessed_frames = []
+    for frame in video_array:
+        frame_resized = resize(frame, target_size, anti_aliasing=True)
+        preprocessed_frames.append(frame_resized)
+
+    preprocessed_array = np.array(preprocessed_frames)
+    preprocessed_array = preprocessed_array.reshape(1, 1, 4, *preprocessed_array.shape[1:]) # (1, 2, 22, 224, 224, 3)
+    video_input = torch.from_numpy(preprocessed_array)
+
+    return video_input
 
 
 def nearest_even(n):
@@ -126,25 +143,6 @@ def nearest_even(n):
         return n
     else:
         return n - 1 if n % 2 == 1 else n + 1
-
-
-def preprocess_frames(video_array, fps, target_size=(224, 224)):
-    video_array = video_array / 255.0
-    fps = nearest_even(int(fps))
-    preprocessed_frames = []
-    for frame in video_array:
-        frame_resized = resize(frame, target_size, anti_aliasing=True)
-        preprocessed_frames.append(frame_resized)
-
-    preprocessed_array = np.array(preprocessed_frames)
-    num_frames = preprocessed_array.shape[0]
-    time = num_frames // fps
-    preprocessed_array = preprocessed_array[:time * fps]
-    preprocessed_array = preprocessed_array.reshape(1, time, fps, *preprocessed_array.shape[1:]) # (1, 2, 22, 224, 224, 3)
-    video_input = torch.from_numpy(preprocessed_array)
-
-    return video_input
-
 
 
 if __name__ == '__main__':
@@ -162,16 +160,16 @@ if __name__ == '__main__':
                 action = row['Action']
                 start_seconds = row['Start']
                 end_seconds = row['End']
-                print(index)
+
                 extracted_text = get_subtitles_in_time_range(subtitles, start_seconds, end_seconds)
-                cropped_video, fps = get_video_clip(video_path, start_seconds, end_seconds)
-                print(f"FPS: {fps}")
-                video_input = preprocess_frames(cropped_video, fps)
+                start_clip, end_clip = get_video_clip(video_path, start_seconds, end_seconds)
+                start_clip = preprocess_frames(start_clip)
+                end_clip = preprocess_frames(end_clip)
 
                 print(f"Action: {action}")
                 print(f"Start: {start_seconds} seconds")
                 print(f"End: {end_seconds} seconds")
-                print(video_input.shape)
+                print(end_clip.shape)
                 print(f"Extracted Text: {extracted_text}\n")
 
 
