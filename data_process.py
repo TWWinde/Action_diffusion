@@ -118,8 +118,22 @@ if __name__ == '__main__':
     for video_path in video_paths:
         csv_path = get_csv_path_from_video_path(video_path)
         srt_path = get_srt_path_from_video_path(video_path)
-        df = read_csv(csv_path)
-        print(df)
+        if os.path.exists(csv_path):
+            df = read_csv(csv_path)
+            print(df)
+
+            for index, row in df.iterrows():
+                action = row['Action']
+                start_seconds = row['Start']
+                end_seconds = row['End']
+
+                extracted_text = get_subtitles_in_time_range(subtitles, start_seconds, end_seconds)
+
+                print(f"Action: {action}")
+                print(f"Start: {start_seconds} seconds")
+                print(f"End: {end_seconds} seconds")
+                print(f"Extracted Text: {extracted_text}\n")
+
 
        # a = parse_srt(srt_path)
         #print(a)
