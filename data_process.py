@@ -126,13 +126,14 @@ if __name__ == '__main__':
                 action = row['Action']
                 start_seconds = row['Start']
                 end_seconds = row['End']
-
                 extracted_text = get_subtitles_in_time_range(subtitles, start_seconds, end_seconds)
-
+                video = get_video_clip(video_path, start_seconds, end_seconds)
+                print(video.shape)
                 print(f"Action: {action}")
                 print(f"Start: {start_seconds} seconds")
                 print(f"End: {end_seconds} seconds")
                 print(f"Extracted Text: {extracted_text}\n")
+
 
                 break
 
