@@ -2,6 +2,8 @@ import glob
 import os
 import re
 from datetime import datetime
+
+import numpy as np
 from moviepy.editor import VideoFileClip
 import pandas as pd
 
@@ -112,6 +114,16 @@ def get_video_clip(path, start, end):
     return cropped_video
 
 
+def video_to_array(video):
+    frames = []
+
+    for frame in video.iter_frames():
+        frames.append(frame)
+
+    video_array = np.array(frames)
+    return video_array
+
+
 if __name__ == '__main__':
     root_dir = '/scratch/users/tang/data/niv'
     video_paths = get_video_path(root_dir)
@@ -128,6 +140,7 @@ if __name__ == '__main__':
                 end_seconds = row['End']
                 extracted_text = get_subtitles_in_time_range(subtitles, start_seconds, end_seconds)
                 video = get_video_clip(video_path, start_seconds, end_seconds)
+                video_array = video_to_array(video)
                 print(video.shape)
                 print(f"Action: {action}")
                 print(f"Start: {start_seconds} seconds")
