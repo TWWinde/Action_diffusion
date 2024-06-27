@@ -1,8 +1,6 @@
-import glob
 import os
 import re
 from datetime import datetime
-
 import torch
 from skimage.transform import resize
 import numpy as np
@@ -158,11 +156,13 @@ if __name__ == '__main__':
         if os.path.exists(csv_path):
             df = read_csv(csv_path)
             subtitles = parse_srt(srt_path)
+            print(df.shape)
 
             for index, row in df.iterrows():
                 action = row['Action']
                 start_seconds = row['Start']
                 end_seconds = row['End']
+                print(index)
                 extracted_text = get_subtitles_in_time_range(subtitles, start_seconds, end_seconds)
                 cropped_video, fps = get_video_clip(video_path, start_seconds, end_seconds)
                 print(f"FPS: {fps}")
@@ -175,6 +175,5 @@ if __name__ == '__main__':
                 print(video_input)
                 print(f"Extracted Text: {extracted_text}\n")
 
-                break
 
         break
