@@ -135,5 +135,7 @@ if __name__ == '__main__':
                 print(f"End: {end_seconds} seconds")
                 print(f"Extracted Text: {extracted_text}\n")
 
+                break
+
 
 
