@@ -120,8 +120,7 @@ if __name__ == '__main__':
         srt_path = get_srt_path_from_video_path(video_path)
         if os.path.exists(csv_path):
             df = read_csv(csv_path)
-            srt_content = read_srt_file(srt_path)
-            subtitles = parse_srt(srt_content)
+            subtitles = parse_srt(srt_path)
 
             for index, row in df.iterrows():
                 action = row['Action']
