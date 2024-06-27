@@ -121,9 +121,16 @@ def get_video_clip(path, start, end):
     return video_array, video.fps
 
 
+def nearest_even(n):
+    if n % 2 == 0:
+        return n
+    else:
+        return n - 1 if n % 2 == 1 else n + 1
+
+
 def preprocess_frames(video_array, fps, target_size=(224, 224)):
     video_array = video_array / 255.0
-
+    fps = nearest_even(int(fps))
     preprocessed_frames = []
     for frame in video_array:
         frame_resized = resize(frame, target_size, anti_aliasing=True)
@@ -131,7 +138,7 @@ def preprocess_frames(video_array, fps, target_size=(224, 224)):
 
     preprocessed_array = np.array(preprocessed_frames)
     num_frames = preprocessed_array.shape[0]
-    time = num_frames // fps
+    time = int(num_frames // fps)
     preprocessed_array = preprocessed_array[:time * fps]  # 去掉多余的帧
     preprocessed_array = preprocessed_array.view(1, time, fps, *preprocessed_array.shape[1:])
 
