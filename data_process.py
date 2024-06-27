@@ -2,6 +2,8 @@ import glob
 import os
 import re
 from datetime import datetime
+
+import torch
 from skimage.transform import resize
 import numpy as np
 from moviepy.editor import VideoFileClip
@@ -140,8 +142,10 @@ def preprocess_frames(video_array, fps, target_size=(224, 224)):
     num_frames = preprocessed_array.shape[0]
     time = num_frames // fps
     preprocessed_array = preprocessed_array[:time * fps]
-    preprocessed_array = preprocessed_array.reshape(1, time, fps, *preprocessed_array.shape[1:])
-    return preprocessed_array
+    preprocessed_array = preprocessed_array.reshape(1, time, fps, *preprocessed_array.shape[1:]) # (1, 2, 22, 224, 224, 3)
+    video_input = torch.from_numpy(preprocessed_array)
+
+    return video_input
 
 
 
@@ -162,13 +166,13 @@ if __name__ == '__main__':
                 extracted_text = get_subtitles_in_time_range(subtitles, start_seconds, end_seconds)
                 cropped_video, fps = get_video_clip(video_path, start_seconds, end_seconds)
                 print(f"FPS: {fps}")
-                preprocessed_array = preprocess_frames(cropped_video, fps)
+                video_input = preprocess_frames(cropped_video, fps)
 
                 print(f"Action: {action}")
                 print(f"Start: {start_seconds} seconds")
                 print(f"End: {end_seconds} seconds")
-                print(preprocessed_array.shape)
-                print(preprocessed_array)
+                print(video_input.shape)
+                print(video_input)
                 print(f"Extracted Text: {extracted_text}\n")
 
                 break
