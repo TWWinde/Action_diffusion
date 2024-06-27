@@ -118,10 +118,10 @@ def get_video_clip(path, start, end):
         frames.append(frame)
 
     video_array = np.array(frames)
-    return video_array
+    return video_array, video.fps
 
 
-def preprocess_frames(video_array, target_size=(224, 224)):
+def preprocess_frames(video_array, fps, target_size=(224, 224)):
     video_array = video_array / 255.0
 
     preprocessed_frames = []
@@ -130,6 +130,11 @@ def preprocess_frames(video_array, target_size=(224, 224)):
         preprocessed_frames.append(frame_resized)
 
     preprocessed_array = np.array(preprocessed_frames)
+    num_frames = preprocessed_array.shape[0]
+    time = num_frames // fps
+    preprocessed_array = preprocessed_array[:time * fps]  # 去掉多余的帧
+    preprocessed_array = preprocessed_array.view(1, time, fps, *preprocessed_array.shape[1:])
+
     return preprocessed_array
 
 
@@ -149,8 +154,8 @@ if __name__ == '__main__':
                 start_seconds = row['Start']
                 end_seconds = row['End']
                 extracted_text = get_subtitles_in_time_range(subtitles, start_seconds, end_seconds)
-                cropped_video = get_video_clip(video_path, start_seconds, end_seconds)
-                preprocessed_array = preprocess_frames(cropped_video)
+                cropped_video, fps = get_video_clip(video_path, start_seconds, end_seconds)
+                preprocessed_array = preprocess_frames(cropped_video, fps)
                 print(f"Action: {action}")
                 print(f"Start: {start_seconds} seconds")
                 print(f"End: {end_seconds} seconds")
