@@ -139,7 +139,7 @@ def preprocess_frames(video_array, fps, target_size=(224, 224)):
     preprocessed_array = np.array(preprocessed_frames)
     num_frames = preprocessed_array.shape[0]
     time = int(num_frames // fps)
-    preprocessed_array = preprocessed_array[:time * fps]  # 去掉多余的帧
+    preprocessed_array = preprocessed_array[:time * fps]
     preprocessed_array = preprocessed_array.view(1, time, fps, *preprocessed_array.shape[1:])
 
     return preprocessed_array
@@ -162,7 +162,9 @@ if __name__ == '__main__':
                 end_seconds = row['End']
                 extracted_text = get_subtitles_in_time_range(subtitles, start_seconds, end_seconds)
                 cropped_video, fps = get_video_clip(video_path, start_seconds, end_seconds)
+                print(f"FPS: {fps}")
                 preprocessed_array = preprocess_frames(cropped_video, fps)
+
                 print(f"Action: {action}")
                 print(f"Start: {start_seconds} seconds")
                 print(f"End: {end_seconds} seconds")
