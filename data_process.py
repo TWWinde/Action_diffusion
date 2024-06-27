@@ -138,10 +138,9 @@ def preprocess_frames(video_array, fps, target_size=(224, 224)):
 
     preprocessed_array = np.array(preprocessed_frames)
     num_frames = preprocessed_array.shape[0]
-    time = int(num_frames // fps)
+    time = num_frames // fps
     preprocessed_array = preprocessed_array[:time * fps]
-    preprocessed_array = preprocessed_array.view(1, time, fps, *preprocessed_array.shape[1:])
-
+    preprocessed_array = preprocessed_array.reshape(1, time, fps, *preprocessed_array.shape[1:])
     return preprocessed_array
 
 
