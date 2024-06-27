@@ -95,7 +95,6 @@ def get_srt_path_from_video_path(path):
     root_path = path.split('videos')[0]
 
     srt = os.path.join(root_path, 'subtitles', 'manual', file_name + '.srt')
-    print(srt)
 
     return srt
 
@@ -139,16 +138,14 @@ if __name__ == '__main__':
                 start_seconds = row['Start']
                 end_seconds = row['End']
                 extracted_text = get_subtitles_in_time_range(subtitles, start_seconds, end_seconds)
-                video = get_video_clip(video_path, start_seconds, end_seconds)
-                video_array = video_to_array(video)
-                print(video_array.shape)
+                cropped_video = get_video_clip(video_path, start_seconds, end_seconds)
+                video_array = video_to_array(cropped_video)
                 print(f"Action: {action}")
                 print(f"Start: {start_seconds} seconds")
                 print(f"End: {end_seconds} seconds")
+                print(video_array.shape)
                 print(f"Extracted Text: {extracted_text}\n")
-
 
                 break
 
-
-
+        break
