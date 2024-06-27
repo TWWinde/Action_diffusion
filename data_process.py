@@ -35,9 +35,8 @@ def time_str_to_seconds(time_str):
 
 
 def get_subtitles_in_time_range(subtitles, start_time, end_time):
-    print(start_time)
-    start_seconds = time_str_to_seconds(start_time)
-    end_seconds = time_str_to_seconds(end_time)
+    start_seconds = start_time
+    end_seconds = end_time
 
     result = []
     for subtitle in subtitles:
