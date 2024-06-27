@@ -108,19 +108,18 @@ def read_csv(path):
 
 def get_video_clip(path, start, end):
     video = VideoFileClip(path)
+    print(start, end)
     cropped_video = video.subclip(start, end)
-
-    return cropped_video
-
-
-def video_to_array(video):
     frames = []
 
-    for frame in video.iter_frames():
+    for frame in cropped_video.iter_frames():
         frames.append(frame)
 
     video_array = np.array(frames)
     return video_array
+
+
+
 
 
 if __name__ == '__main__':
@@ -139,11 +138,10 @@ if __name__ == '__main__':
                 end_seconds = row['End']
                 extracted_text = get_subtitles_in_time_range(subtitles, start_seconds, end_seconds)
                 cropped_video = get_video_clip(video_path, start_seconds, end_seconds)
-                video_array = video_to_array(cropped_video)
                 print(f"Action: {action}")
                 print(f"Start: {start_seconds} seconds")
                 print(f"End: {end_seconds} seconds")
-                print(video_array.shape)
+                print(cropped_video.shape)
                 print(f"Extracted Text: {extracted_text}\n")
 
                 break
