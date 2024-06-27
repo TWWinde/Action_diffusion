@@ -172,7 +172,6 @@ if __name__ == '__main__':
                 print(f"Start: {start_seconds} seconds")
                 print(f"End: {end_seconds} seconds")
                 print(video_input.shape)
-                print(video_input)
                 print(f"Extracted Text: {extracted_text}\n")
 
 
