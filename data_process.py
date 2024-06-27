@@ -108,6 +108,7 @@ def read_csv(path):
 
 def get_video_clip(path, start, end):
     video = VideoFileClip(path)
+    print(f"Original video size: {video.size}")
     print(start, end)
     cropped_video = video.subclip(start, end)
     frames = []
