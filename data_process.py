@@ -2,7 +2,7 @@ import glob
 import os
 import re
 from datetime import datetime
-
+from skimage.transform import resize
 import numpy as np
 from moviepy.editor import VideoFileClip
 import pandas as pd
@@ -108,9 +108,9 @@ def read_csv(path):
 
 def get_video_clip(path, start, end):
     video = VideoFileClip(path)
-    print(f"Original video size: {video.size}")
-    print(f"Video FPS: {video.fps}")
-    print(start, end)
+    #print(f"Original video size: {video.size}")
+    #print(f"Video FPS: {video.fps}")
+    #print(start, end)
     cropped_video = video.subclip(start, end)
     frames = []
 
@@ -121,6 +121,16 @@ def get_video_clip(path, start, end):
     return video_array
 
 
+def preprocess_frames(video_array, target_size=(224, 224)):
+    video_array = video_array / 255.0
+
+    preprocessed_frames = []
+    for frame in video_array:
+        frame_resized = resize(frame, target_size, anti_aliasing=True)
+        preprocessed_frames.append(frame_resized)
+
+    preprocessed_array = np.array(preprocessed_frames)
+    return preprocessed_array
 
 
 
@@ -140,10 +150,12 @@ if __name__ == '__main__':
                 end_seconds = row['End']
                 extracted_text = get_subtitles_in_time_range(subtitles, start_seconds, end_seconds)
                 cropped_video = get_video_clip(video_path, start_seconds, end_seconds)
+                preprocessed_array = preprocess_frames(cropped_video)
                 print(f"Action: {action}")
                 print(f"Start: {start_seconds} seconds")
                 print(f"End: {end_seconds} seconds")
-                print(cropped_video.shape)
+                print(preprocessed_array.shape)
+                print(preprocessed_array)
                 print(f"Extracted Text: {extracted_text}\n")
 
                 break
