@@ -290,7 +290,7 @@ class PlanningDataset(Dataset):
                         niv_data = json.load(f)
                 for d in niv_data:
                     legal_range = []
-                    path = os.path.join( root, 'dataset/NIV', 'processed_data' , d['feature'])
+                    path = os.path.join( root, 'dataset/NIV', 'processed_data', d['feature'])
                     info = np.load(path, allow_pickle=True)
                     num_steps = int(info['num_steps'])
                     assert num_steps == len(info['steps_ids'])

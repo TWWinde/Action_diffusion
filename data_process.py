@@ -1,3 +1,4 @@
+import json
 import os
 import re
 from datetime import datetime
@@ -145,7 +146,8 @@ def nearest_even(n):
         return n - 1 if n % 2 == 1 else n + 1
 
 
-if __name__ == '__main__':
+ok = False
+if ok :
     root_dir = '/scratch/users/tang/data/niv'
     video_paths = get_video_path(root_dir)
     for video_path in video_paths:
@@ -174,3 +176,30 @@ if __name__ == '__main__':
 
 
         break
+
+
+if __name__ == '__main__':
+    json_dir = '/Users/tangwenwu/Documents/GitHub/Action_diffusion/action_diffusion/dataset/NIV/train_split_T3.json'
+    with open(json_dir, 'r') as file:
+        data = json.load(file)
+
+    for item in data:
+        feature = item['id']['feature']
+        legal_range = item['id']['legal_range']
+        task_id = item['id']['task_id']
+        instruction_len = item['instruction_len']
+        for i in legal_range:
+            steps_ids = i[2]
+            start_time = i[0]
+            end_time = i[1]
+
+
+        print(f"Feature: {feature}")
+        print(f"Legal Range: {legal_range}")
+        print(f"Task ID: {task_id}")
+        print(f"Instruction Length: {instruction_len}")
+        print("----------------------")
+
+
+    print(j)
+
