@@ -415,7 +415,7 @@ def train(train_loader, n_train_steps, model, scheduler, args, optimizer, if_cal
                 observations[:, 1, :] = global_img_tensors[:, -1, :]
 
                 task_s = model(observations.cuda())  # [bs, 18]
-                task_class_one_hot = batch[0].cuda().float()
+                task_class_one_hot = batch[0].cuda()
                 # loss = F.mse_loss(task_s, task_class_one_hot.cuda())
                 loss = F.cross_entropy(task_s, task_class_one_hot)
 
