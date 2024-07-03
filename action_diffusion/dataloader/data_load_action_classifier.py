@@ -32,7 +32,6 @@ class ActionDataset(Dataset):
         data = np.load(file_path, allow_pickle=True)
 
         info = data[sample_idx]
-        print(info)
         action_labels = info['steps_ids']
         video_feature = info['video_feature']
         text_feature = info['text_feature']
