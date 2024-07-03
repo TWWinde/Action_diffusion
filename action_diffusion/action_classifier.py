@@ -8,7 +8,6 @@ import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.optim
 import torch.utils.data
-import torch.utils.data.distributed
 import torch.nn.functional as F
 from dataloader.data_load_action_classifier import ActionDataset
 from model.helpers import get_lr_schedule_with_warmup, Logger
@@ -269,7 +268,7 @@ def main_worker(gpu, args):
                     {
                         "epoch": epoch + 1,
                         "model": model.state_dict(),
-                        "tb_logdir": '/scratch/users/tang/Action_diffusion/action_diffusion/checkpoint_mlp/whl', #tb_logdir,
+                        "tb_logdir": tb_logdir,
                         "scheduler": scheduler.state_dict(),
                         "optimizer": optimizer.state_dict(),
                     }, save_max, old_max_epoch, epoch + 1
