@@ -249,11 +249,11 @@ def main_worker(gpu, args):
 
         if (epoch + 1) % 2 == 0 and args.evaluate:
             losses, acc = test(test_loader, model)
-            print('acc', acc)
-            print('losses', losses)
 
             losses_reduced = losses.cuda().item()
             acc_reduced = acc.cuda().item()
+            print('acc', acc_reduced)
+            print('losses', losses_reduced)
             logs = OrderedDict()
             logs['Val/EpochLoss'] = losses_reduced
             logs['Val/EpochAcc@1'] = acc_reduced
