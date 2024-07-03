@@ -408,7 +408,7 @@ def train(train_loader, n_train_steps, model, scheduler, args, optimizer, if_cal
             #print(batch[2].shape)
             bs, T, dim = batch[1].shape  # [bs, (T+1), ob_dim]
             with torch.set_grad_enabled(True):
-                task_class = batch[0].view(-1).cuda()  # [bs]
+                task_class = batch[0].cuda()      #.view(-1).cuda()  # [bs]
 
                 global_img_tensors = batch[1].cuda()
                 observations = torch.zeros(bs, 2, dim)
