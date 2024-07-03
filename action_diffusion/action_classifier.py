@@ -335,7 +335,7 @@ def main_worker(gpu, ngpus_per_node, args):
 
                 tb_logger.flush()
         else:
-            losses = train(train_loader, args.n_train_steps, model, scheduler, args, optimizer, False).cuda()
+            losses = train(train_loader, args.n_train_steps, model, scheduler, args, optimizer, False)
             losses_reduced = reduce_tensor(losses).item()
             if args.rank == 0:
                 print('lrs:')
