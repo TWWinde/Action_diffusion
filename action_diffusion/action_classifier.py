@@ -368,9 +368,9 @@ def test(val_loader, model):
     losses = AverageMeter()
     acc_top1 = AverageMeter()
     for i_batch, sample_batch in enumerate(val_loader):
-        global_img_tensors = sample_batch[0].cuda()
+        global_img_tensors = sample_batch[1].cuda()
         batch_size_current, T, dim = global_img_tensors.size()
-        task_class = sample_batch[2].cuda()
+        task_class = sample_batch[0].cuda()
 
         with torch.no_grad():
             task_class = task_class.view(-1)
