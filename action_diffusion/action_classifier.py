@@ -6,14 +6,10 @@ from collections import OrderedDict
 from torch.utils.data import Dataset, DataLoader, random_split
 import torch.nn.parallel
 import torch.backends.cudnn as cudnn
-import torch.distributed as dist
 import torch.optim
-import torch.multiprocessing as mp
 import torch.utils.data
 import torch.utils.data.distributed
-from torch.distributed import ReduceOp
 import torch.nn.functional as F
-from dataloader.data_load_mlp import PlanningDataset
 from dataloader.data_load_action_classifier import ActionDataset
 from model.helpers import get_lr_schedule_with_warmup, Logger
 import torch.nn as nn
@@ -126,13 +122,6 @@ class ResMLP(nn.Module):
         out = self.classifier(y)
         return out
 
-
-def reduce_tensor(tensor):
-    rt = tensor.clone()
-    torch.distributed.all_reduce(rt, op=ReduceOp.SUM)
-    rt /= dist.get_world_size()
-    return rt
-
 def collate_fn(batch):
     action_labels = [item[0] for item in batch]
     video_features = [item[1] for item in batch]
@@ -160,35 +149,17 @@ def main():
 
         torch.backends.cudnn.deterministic = True
 
-    args.distributed = args.world_size > 1 or args.multiprocessing_distributed
+    args.distributed = False
     ngpus_per_node = torch.cuda.device_count()
     # print('ngpus_per_node:', ngpus_per_node)
 
-    if args.multiprocessing_distributed:
-        args.world_size = ngpus_per_node * args.world_size
-        mp.spawn(main_worker, nprocs=ngpus_per_node, args=(ngpus_per_node, args))
-    else:
-        main_worker(args.gpu, ngpus_per_node, args)
+    main_worker(args.gpu, ngpus_per_node, args)
 
 
 def main_worker(gpu, ngpus_per_node, args):
     args.gpu = gpu
 
-    if args.distributed:
-        if args.multiprocessing_distributed:
-            args.rank = args.rank * ngpus_per_node + gpu
-        dist.init_process_group(
-            backend=args.dist_backend,
-            init_method=args.dist_url,
-            world_size=args.world_size,
-            rank=args.rank,
-        )
-        if args.gpu is not None:
-            torch.cuda.set_device(args.gpu)
-            args.batch_size = int(args.batch_size / ngpus_per_node)
-            args.batch_size_val = int(args.batch_size_val / ngpus_per_node)
-            args.num_thread_reader = int(args.num_thread_reader / ngpus_per_node)
-    elif args.gpu is not None:
+    if args.gpu is not None:
         torch.cuda.set_device(args.gpu)
 
     # Data loading code
@@ -197,12 +168,9 @@ def main_worker(gpu, ngpus_per_node, args):
     test_size = len(dataset) - train_size
     train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
 
-    if args.distributed:
-        train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
-        test_sampler = torch.utils.data.distributed.DistributedSampler(test_dataset)
-    else:
-        train_sampler = None
-        test_sampler = None
+
+    train_sampler = None
+    test_sampler = None
 
     train_loader = torch.utils.data.DataLoader(
         train_dataset,
@@ -230,15 +198,7 @@ def main_worker(gpu, ngpus_per_node, args):
         net_data = torch.load(args.pretrain_cnn_path)
         model.model.load_state_dict(net_data)
         model.ema_model.load_state_dict(net_data)
-    if args.distributed:
-        if args.gpu is not None:
-            model.cuda(args.gpu)
-            model = torch.nn.parallel.DistributedDataParallel(
-                model, device_ids=[args.gpu], find_unused_parameters=True)
-        else:
-            model.cuda()
-            model = torch.nn.parallel.DistributedDataParallel(model, find_unused_parameters=True)
-    elif args.gpu is not None:
+    if args.gpu is not None:
         model = model.cuda(args.gpu)
     else:
         model = torch.nn.DataParallel(model).cuda()
@@ -290,69 +250,65 @@ def main_worker(gpu, ngpus_per_node, args):
     save_max = os.path.join(os.path.dirname(__file__), 'save_max_mlp')
 
     for epoch in range(args.start_epoch, args.epochs):
-        if args.distributed:
-            train_sampler.set_epoch(epoch)
+
         if (epoch + 1) % 2 == 0 and args.evaluate:
             losses, acc = test(test_loader, model)
 
-            losses_reduced = reduce_tensor(losses.cuda()).item()
-            acc_reduced = reduce_tensor(acc.cuda()).item()
+            losses_reduced = losses.cuda().item()
+            acc_reduced = acc.cuda().item()
+            logs = OrderedDict()
+            logs['Val/EpochLoss'] = losses_reduced
+            logs['Val/EpochAcc@1'] = acc_reduced
+            for key, value in logs.items():
+                tb_logger.log_scalar(value, key, epoch + 1)
 
-            if args.rank == 0:
-                logs = OrderedDict()
-                logs['Val/EpochLoss'] = losses_reduced
-                logs['Val/EpochAcc@1'] = acc_reduced
-                for key, value in logs.items():
-                    tb_logger.log_scalar(value, key, epoch + 1)
+            tb_logger.flush()
 
-                tb_logger.flush()
+            if acc_reduced >= max_eva:
+                save_checkpoint2(
+                    {
+                        "epoch": epoch + 1,
+                        "model": model.state_dict(),
+                        "tb_logdir": tb_logdir,
+                        "scheduler": scheduler.state_dict(),
+                        "optimizer": optimizer.state_dict(),
+                    }, save_max, old_max_epoch, epoch + 1
+                )
+                max_eva = acc_reduced
+                old_max_epoch = epoch + 1
 
-                if acc_reduced >= max_eva:
-                    save_checkpoint2(
-                        {
-                            "epoch": epoch + 1,
-                            "model": model.state_dict(),
-                            "tb_logdir": tb_logdir,
-                            "scheduler": scheduler.state_dict(),
-                            "optimizer": optimizer.state_dict(),
-                        }, save_max, old_max_epoch, epoch + 1
-                    )
-                    max_eva = acc_reduced
-                    old_max_epoch = epoch + 1
 
         # train for one epoch
         if (epoch + 1) % 2 == 0:  # calculate on training set
             losses, acc_top1 = train(train_loader, args.n_train_steps, model, scheduler, args, optimizer, True)
-            #losses_reduced = reduce_tensor(losses.cuda()).item()
-            #acc_top1_reduced = reduce_tensor(acc_top1.cuda()).item()
 
-            if args.rank == 0:
-                logs = OrderedDict()
-                logs['Train/EpochLoss'] = losses #losses_reduced
-                logs['Train/EpochAcc@1'] = acc_top1 #acc_top1_reduced
-                for key, value in logs.items():
-                    tb_logger.log_scalar(value, key, epoch + 1)
 
-                tb_logger.flush()
+            logs = OrderedDict()
+            logs['Train/EpochLoss'] = losses #losses_reduced
+            logs['Train/EpochAcc@1'] = acc_top1 #acc_top1_reduced
+            for key, value in logs.items():
+                tb_logger.log_scalar(value, key, epoch + 1)
+
+            tb_logger.flush()
         else:
             losses = train(train_loader, args.n_train_steps, model, scheduler, args, optimizer, False).cuda()
             losses_reduced = losses.item()     #  reduce_tensor(losses).item()
-            if args.rank == 0:
-                print('lrs:')
-                for p in optimizer.param_groups:
-                    print(p['lr'])
-                print('---------------------------------')
 
-                logs = OrderedDict()
-                logs['Train/EpochLoss'] = losses_reduced
-                for key, value in logs.items():
-                    tb_logger.log_scalar(value, key, epoch + 1)
+            print('lrs:')
+            for p in optimizer.param_groups:
+                print(p['lr'])
+            print('---------------------------------')
 
-                tb_logger.flush()
+            logs = OrderedDict()
+            logs['Train/EpochLoss'] = losses_reduced
+            for key, value in logs.items():
+                tb_logger.log_scalar(value, key, epoch + 1)
+
+            tb_logger.flush()
 
         if (epoch + 1) % args.save_freq == 0:
-            if args.rank == 0:
-                save_checkpoint(
+
+            save_checkpoint(
                     {
                         "epoch": epoch + 1,
                         "model": model.state_dict(),
