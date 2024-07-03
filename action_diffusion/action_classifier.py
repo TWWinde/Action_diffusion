@@ -323,20 +323,20 @@ def main_worker(gpu, ngpus_per_node, args):
         # train for one epoch
         if (epoch + 1) % 2 == 0:  # calculate on training set
             losses, acc_top1 = train(train_loader, args.n_train_steps, model, scheduler, args, optimizer, True)
-            losses_reduced = reduce_tensor(losses.cuda()).item()
-            acc_top1_reduced = reduce_tensor(acc_top1.cuda()).item()
+            #losses_reduced = reduce_tensor(losses.cuda()).item()
+            #acc_top1_reduced = reduce_tensor(acc_top1.cuda()).item()
 
             if args.rank == 0:
                 logs = OrderedDict()
-                logs['Train/EpochLoss'] = losses_reduced
-                logs['Train/EpochAcc@1'] = acc_top1_reduced
+                logs['Train/EpochLoss'] = losses #losses_reduced
+                logs['Train/EpochAcc@1'] = acc_top1 #acc_top1_reduced
                 for key, value in logs.items():
                     tb_logger.log_scalar(value, key, epoch + 1)
 
                 tb_logger.flush()
         else:
             losses = train(train_loader, args.n_train_steps, model, scheduler, args, optimizer, False).cuda()
-            losses_reduced = reduce_tensor(losses).item()
+            losses_reduced = losses.item()     #  reduce_tensor(losses).item()
             if args.rank == 0:
                 print('lrs:')
                 for p in optimizer.param_groups:
@@ -430,7 +430,7 @@ def train(train_loader, n_train_steps, model, scheduler, args, optimizer, if_cal
     if if_calculate_acc:
         with torch.no_grad():
             task_pred = task_s.argmax(dim=-1)
-            correct = task_pred.eq(task_class)
+            correct = task_pred.eq(task_class_one_hot)
             acc = torch.sum(correct) / bs * 100
         return torch.tensor(losses.avg), torch.tensor(acc)
 
