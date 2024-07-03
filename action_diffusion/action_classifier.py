@@ -4,7 +4,6 @@ import random
 import time
 from collections import OrderedDict
 from torch.utils.data import Dataset, DataLoader, random_split
-import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.optim
 import torch.utils.data
