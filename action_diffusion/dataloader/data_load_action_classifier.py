@@ -17,7 +17,7 @@ class ActionDataset(Dataset):
 
     def _load_data(self):
         for d in self.file_path_list:
-            path = os.path.join(self.root, d)
+            path = os.path.join(self.data_root, d)
             data = np.load(path, allow_pickle=True)
             for info in data:
                 action_labels = info['steps_ids']
