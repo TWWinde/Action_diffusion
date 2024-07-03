@@ -32,7 +32,8 @@ class ActionDataset(Dataset):
         data = np.load(file_path, allow_pickle=True)
         info = data[sample_idx]
 
-        action_labels = int(info['steps_ids'])
+        action_labels = info['steps_ids']
+        print(action_labels)
         video_feature = info['video_feature']
         text_feature = info['text_feature']
         action_labels = torch.tensor(action_labels, dtype=torch.long)
