@@ -21,8 +21,8 @@ class ActionDataset(Dataset):
             data = np.load(path, allow_pickle=True)
             for info in data:
                 action_labels = info['steps_ids']
-                video_feature = info['video_features']
-                text_feature = info['frames_features']
+                video_feature = info['video_feature']
+                text_feature = info['frames_feature']
                 self.data.append((action_labels, video_feature, text_feature))
 
     def __len__(self):
