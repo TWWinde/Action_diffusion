@@ -10,7 +10,7 @@ class ActionDataset(Dataset):
 
         self.data_root = root
         self.file_name_list = os.listdir(self.data_root)
-        self.file_path_list = [os.path.join(self.data_root, name) for name in self.file_list if name.endswith('.npy')]
+        self.file_path_list = [os.path.join(self.data_root, name) for name in self.file_name_list if name.endswith('.npy')]
         self.num_classes = 48
         self.data = []
         self._load_data()

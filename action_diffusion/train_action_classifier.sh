@@ -1,5 +1,6 @@
-python3 /Users/tangwenwu/Documents/GitHub/Action_diffusion/action_diffusion/action_classifier.py \
+python3 /scratch/users/tang/Action_diffusion/action_diffusion/action_classifier.py \
 --multiprocessing-distributed \
+--root /scratch/users/tang/data/niv/preprocessed_data \
 --num_thread_reader 8 \
 --cudnn_benchmark 1 \
 --pin_memory \
