@@ -137,7 +137,8 @@ def collate_fn(batch):
 def main():
     args = get_args()
     os.environ['PYTHONHASHSEED'] = str(args.seed)
-
+    torch.set_num_threads(1)
+    os.environ["OMP_NUM_THREADS"] = "1"
     args.log_root += '_mlp'
     if args.verbose:
         print(args)
@@ -150,13 +151,12 @@ def main():
         torch.backends.cudnn.deterministic = True
 
     args.distributed = False
-    ngpus_per_node = torch.cuda.device_count()
     # print('ngpus_per_node:', ngpus_per_node)
 
-    main_worker(args.gpu, ngpus_per_node, args)
+    main_worker(args.gpu, args)
 
 
-def main_worker(gpu, ngpus_per_node, args):
+def main_worker(gpu, args):
     args.gpu = gpu
 
     if args.gpu is not None:
