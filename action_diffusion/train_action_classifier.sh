@@ -1,4 +1,4 @@
-python3 action_classifier.py \
+python3 /Users/tangwenwu/Documents/GitHub/Action_diffusion/action_diffusion/action_classifier.py \
 --multiprocessing-distributed \
 --num_thread_reader 8 \
 --cudnn_benchmark 1 \
@@ -11,6 +11,4 @@ python3 action_classifier.py \
 --resume \
 --horizon 3 \
 --class_dim 48 \
---observation_dim 768 \
---json_path_val dataset/crosstask/crosstask_release/test_split_T3.json \
---json_path_train dataset/crosstask/crosstask_release/train_split_T3.json
+--observation_dim 768

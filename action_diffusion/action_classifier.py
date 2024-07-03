@@ -3,7 +3,7 @@ import os
 import random
 import time
 from collections import OrderedDict
-
+from torch.utils.data import Dataset, DataLoader, random_split
 import torch.nn.parallel
 import torch.backends.cudnn as cudnn
 import torch.distributed as dist
@@ -14,6 +14,7 @@ import torch.utils.data.distributed
 from torch.distributed import ReduceOp
 import torch.nn.functional as F
 from dataloader.data_load_mlp import PlanningDataset
+from dataloader.data_load_action_classifier import ActionDataset
 from model.helpers import get_lr_schedule_with_warmup, Logger
 import torch.nn as nn
 from logging import log
@@ -132,26 +133,22 @@ def reduce_tensor(tensor):
     rt /= dist.get_world_size()
     return rt
 
+def collate_fn(batch):
+    action_labels = [item[0] for item in batch]
+    video_features = [item[1] for item in batch]
+    text_features = [item[2] for item in batch]
+
+    action_labels = torch.stack(action_labels)
+    video_features = torch.stack(video_features)
+    text_features = torch.stack(text_features)
+
+    return action_labels, video_features, text_features
+
 
 def main():
     args = get_args()
     os.environ['PYTHONHASHSEED'] = str(args.seed)
-    if os.path.exists(args.json_path_val):
-        pass
-    else:
-        train_dataset = PlanningDataset(
-            args.root,
-            args=args,
-            is_val=False,
-            model=None,
-        )
 
-        test_dataset = PlanningDataset(
-            args.root,
-            args=args,
-            is_val=True,
-            model=None,
-        )
     args.log_root += '_mlp'
     if args.verbose:
         print(args)
@@ -195,19 +192,11 @@ def main_worker(gpu, ngpus_per_node, args):
         torch.cuda.set_device(args.gpu)
 
     # Data loading code
-    train_dataset = PlanningDataset(
-        args.root,
-        args=args,
-        is_val=False,
-        model=None,
-    )
-    # Test data loading code
-    test_dataset = PlanningDataset(
-        args.root,
-        args=args,
-        is_val=True,
-        model=None,
-    )
+    dataset = ActionDataset(args.root)
+    train_size = int(0.9 * len(dataset))
+    test_size = len(dataset) - train_size
+    train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
+
     if args.distributed:
         train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset)
         test_sampler = torch.utils.data.distributed.DistributedSampler(test_dataset)
