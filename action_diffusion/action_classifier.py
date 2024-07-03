@@ -176,7 +176,6 @@ def main_worker(gpu, args):
         batch_size=args.batch_size,
         shuffle=(train_sampler is None),
         drop_last=True,
-        num_workers=args.num_thread_reader,
         pin_memory=args.pin_memory,
         sampler=train_sampler,
     )
@@ -185,7 +184,6 @@ def main_worker(gpu, args):
         batch_size=args.batch_size_val,
         shuffle=False,
         drop_last=False,
-        num_workers=args.num_thread_reader,
         sampler=test_sampler,
     )
 
