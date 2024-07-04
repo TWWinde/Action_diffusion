@@ -95,7 +95,7 @@ def l2_regularization(model, l2_alpha):
 
 
 class ResMLP(nn.Module):
-    def __init__(self, input=9600, dim=3200, expansion_factor=4, depth=2, class_num=18):
+    def __init__(self, input=9600, dim=3200, expansion_factor=4, depth=5, class_num=18):
         super().__init__()
         wrapper = lambda i, fn: PreAffinePostLayerScale(dim, i + 1, fn)  # 封装
         self.embedding = nn.Linear(input, dim)
@@ -119,17 +119,6 @@ class ResMLP(nn.Module):
         y = torch.mean(y, dim=1)  # bs,dim
         out = self.classifier(y)
         return out
-
-def collate_fn(batch):
-    action_labels = [item[0] for item in batch]
-    video_features = [item[1] for item in batch]
-    text_features = [item[2] for item in batch]
-
-    action_labels = torch.stack(action_labels)
-    video_features = torch.stack(video_features)
-    text_features = torch.stack(text_features)
-
-    return action_labels, video_features, text_features
 
 
 def main():
