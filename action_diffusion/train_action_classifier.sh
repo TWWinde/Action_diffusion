@@ -11,4 +11,5 @@ python3 /scratch/users/tang/Action_diffusion/action_diffusion/action_classifier.
 --resume \
 --horizon 3 \
 --class_dim 48 \
+--class_dim NIV \
 --observation_dim 768
