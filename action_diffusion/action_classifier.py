@@ -344,9 +344,9 @@ def train(train_loader, n_train_steps, model, scheduler, args, optimizer, if_cal
         for i in range(args.gradient_accumulate_every):
             batch = next(train_loader_)
             #print(batch)
-            print(batch[0].shape)
-            print(batch[1].shape)
-            print(batch[2].shape)
+            #print(batch[0].shape)
+            #print(batch[1].shape)
+            #print(batch[2].shape)
             bs, T, dim = batch[1].shape  # [bs, (T+1), ob_dim]
             with torch.set_grad_enabled(True):
 
