@@ -95,7 +95,7 @@ def l2_regularization(model, l2_alpha):
 
 
 class ResMLP(nn.Module):
-    def __init__(self, input=9600, dim=3200, expansion_factor=4, depth=5, class_num=18):
+    def __init__(self, input=9600, dim=3200, expansion_factor=4, depth=4, class_num=18):
         super().__init__()
         wrapper = lambda i, fn: PreAffinePostLayerScale(dim, i + 1, fn)  # 封装
         self.embedding = nn.Linear(input, dim)
