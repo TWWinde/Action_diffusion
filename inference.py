@@ -1,3 +1,5 @@
+import sys
+sys.path.append('/scratch/users/tang/fairseq/examples/MMPT')
 import os
 import re
 from datetime import datetime
@@ -108,8 +110,7 @@ def read_csv(path):
     return df
 
 
-
-def get_video_clip(path, start, end):
+def get_video_clip(path, start, end, num=16, also_end=True):
     video = VideoFileClip(path)
     fps = video.fps
     start_frame, end_frame = int(start*fps), int(end*fps)
@@ -119,15 +120,15 @@ def get_video_clip(path, start, end):
     start_clip, end_clip = [], []
 
     for i, frame in enumerate(video.iter_frames()):
-        if start_frame-2 <= i <= start_frame+1:
+        if start_frame-(num-2) <= i <= start_frame+1:
             start_clip.append(frame)
-        elif end_frame-1 <= i <= end_frame+2:
+        elif end_frame-1 <= i <= end_frame+(num-2) and also_end:
             end_clip.append(frame)
 
     return np.array(start_clip), np.array(end_clip)
 
 
-def preprocess_frames(video_array, target_size=(224, 224)):
+def preprocess_frames(video_array, target_size=(224, 224), num=16):
     video_array = (video_array / 255.0) * 2.0 - 1.0
     preprocessed_frames = []
     for frame in video_array:
@@ -136,14 +137,14 @@ def preprocess_frames(video_array, target_size=(224, 224)):
 
     preprocessed_array = np.array(preprocessed_frames)
     num_frames = preprocessed_array.shape[0]
-    if num_frames % 4 != 0:
-        num_additional_frames = 4 - (num_frames % 4)
+    if num_frames % num != 0:
+        num_additional_frames = num - (num_frames % 4)
         black_frame = np.zeros((224, 224, 3), dtype=np.float32)
         for _ in range(num_additional_frames):
             preprocessed_frames.append(black_frame)
         preprocessed_array = np.array(preprocessed_frames)
 
-    preprocessed_array = preprocessed_array.reshape(1, 1, 4, *preprocessed_array.shape[1:]) # (1, 2, 22, 224, 224, 3)
+    preprocessed_array = preprocessed_array.reshape(1, 1, num, *preprocessed_array.shape[1:])  # (1, 2, 22, 224, 224, 3)
     video_input = torch.from_numpy(preprocessed_array)
 
     return video_input.float()
@@ -354,7 +355,8 @@ class_list = {
 
 if __name__ == '__main__':
     root_dir = '/scratch/users/tang/data/niv'
-    save_root_path = '/scratch/users/tang/data/niv/processed_data'
+    #save_root_path = '/scratch/users/tang/data/niv/processed_data'
+    save_root_path = '/scratch/users/tang/data/niv/processed_data_16_onlystart'
     os.makedirs(save_root_path, exist_ok=True)
     video_paths = get_video_path(root_dir)
     model, tokenizer, aligner = MMPTModel.from_pretrained(
@@ -370,7 +372,7 @@ if __name__ == '__main__':
             print(file_name)
             df = read_csv(csv_path)
             subtitles = parse_srt(srt_path)
-
+            also_end = False
             for index, row in df.iterrows():
                 action = row['Action']
                 steps_ids, task_id = class_list[action.strip()]["steps_ids"], class_list[action.strip()]["task_id"]
@@ -378,11 +380,12 @@ if __name__ == '__main__':
                 start_seconds = math.floor(row['Start'])
                 end_seconds = math.ceil(row['End'])
                 extracted_text = get_subtitles_in_time_range(subtitles, start_seconds, end_seconds)
-                start_clip, end_clip = get_video_clip(video_path, start_seconds, end_seconds)
+                start_clip, end_clip = get_video_clip(video_path, start_seconds, end_seconds, num=16, also_end=also_end)
                 if start_clip.size == 0 or end_clip.size == 0:
                     continue
                 start_clip = preprocess_frames(start_clip)
-                end_clip = preprocess_frames(end_clip)
+                if also_end:
+                    end_clip = preprocess_frames(end_clip)
                 details = False
                 print(f"Action: {action}")
                 if details:
@@ -405,12 +408,8 @@ if __name__ == '__main__':
                     output2 = model(end_clip, caps, cmasks, return_score=False)
 
                 start_video_feature, start_text_feature = output1["video"], output1["text"]  # torch.Size([1, 768])
-                end_video_feature, end_text_feature = output2["video"], output2["text"]
                 start_video_feature_np = start_video_feature.cpu().numpy()
-                end_video_feature_np = end_video_feature.cpu().numpy()
                 start_text_feature_np = start_text_feature.cpu().numpy()
-                end_text_feature_np = end_text_feature.cpu().numpy()
-
                 data_dict_start = {
                     'file_name': file_name,
                     'steps_ids': steps_ids,
@@ -422,23 +421,25 @@ if __name__ == '__main__':
                     'start_end': 0
 
                 }
-
-                data_dict_end = {
-                    'file_name': file_name,
-                    'steps_ids': steps_ids,
-                    'task_id': task_id,
-                    'start_seconds': start_seconds,
-                    'end_seconds': end_seconds,
-                    'video_feature': end_video_feature_np,
-                    'text_feature': end_text_feature_np,
-                    'start_end': 1
-                }
-
                 data_list.append(data_dict_start)
-                data_list.append(data_dict_end)
+                if also_end:
+                    end_video_feature, end_text_feature = output2["video"], output2["text"]
+                    end_video_feature_np = end_video_feature.cpu().numpy()
+                    end_text_feature_np = end_text_feature.cpu().numpy()
+                    data_dict_end = {
+                        'file_name': file_name,
+                        'steps_ids': steps_ids,
+                        'task_id': task_id,
+                        'start_seconds': start_seconds,
+                        'end_seconds': end_seconds,
+                        'video_feature': end_video_feature_np,
+                        'text_feature': end_text_feature_np,
+                        'start_end': 1
+                    }
+
+                    data_list.append(data_dict_end)
         file_name = os.path.basename(video_path).split('.')[0] + '.npy'
         save_path = os.path.join(save_root_path, file_name)
-
         np.save(save_path, data_list)
 
 
