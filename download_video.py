@@ -59,13 +59,29 @@ if coin:
 
     data = json.load(open(json_path, 'r'))['database']
     youtube_ids = list(data.keys())
-
+    fail_case = []
     for youtube_id in data:
         info = data[youtube_id]
         type = info['recipe_type']
         url = info['video_url']
         vid_loc = output_path + '/' + str(type)
+
         if not os.path.exists(vid_loc):
             os.mkdir(vid_loc)
         os.system('youtube-dl -o ' + vid_loc + '/' + youtube_id + '.mp4' + ' -f best ' + url)
+
+        filename = f"{youtube_id}.mp4"
+        ydl_opts = {
+            'outtmpl': os.path.join(vid_loc, filename),
+            'format': 'best',
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            try:
+                ydl.download(url)
+            except:
+                print(url, 'is not available')
+                fail_case.append(youtube_id)
+
+        np.save('/scratch/users/tang/data/COIN/', 'fail_case.py')
+
 
