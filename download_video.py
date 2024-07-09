@@ -1,8 +1,9 @@
 import csv
 import os
-
 import numpy as np
 import yt_dlp
+import json
+
 
 
 def read_videos(file_path):
@@ -36,10 +37,35 @@ def download_video(video_url, output_path, video):
     np.save('/scratch/users/tang/data/crosstask_release/', 'fail_case.py')
 
 
-videos = read_videos('/scratch/users/tang/data/crosstask_release/videos.csv')
+cross_task=False
+coin = True
+if cross_task:
+    videos = read_videos('/scratch/users/tang/data/crosstask_release/videos.csv')
 
-output_dir = '/scratch/users/tang/data/crosstask_release/videos'
-os.makedirs(output_dir, exist_ok=True)
+    output_dir = '/scratch/users/tang/data/crosstask_release/videos'
+    os.makedirs(output_dir, exist_ok=True)
 
-for video in videos:
-    download_video(video['url'], output_dir, video)
+    for video in videos:
+        download_video(video['url'], output_dir, video)
+
+
+if coin:
+
+    output_path = '/scratch/users/tang/data/COIN/videos'
+    json_path = '/scratch/users/tang/data/COIN.json'
+
+    if not os.path.exists(output_path):
+        os.mkdir(output_path)
+
+    data = json.load(open(json_path, 'r'))['database']
+    youtube_ids = list(data.keys())
+
+    for youtube_id in data:
+        info = data[youtube_id]
+        type = info['recipe_type']
+        url = info['video_url']
+        vid_loc = output_path + '/' + str(type)
+        if not os.path.exists(vid_loc):
+            os.mkdir(vid_loc)
+        os.system('youtube-dl -o ' + vid_loc + '/' + youtube_id + '.mp4' + ' -f best ' + url)
+
