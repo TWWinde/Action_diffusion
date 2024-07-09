@@ -20,8 +20,10 @@ def read_videos(file_path):
 
 def download_video(video_url, output_path, video):
     fail_case=[]
+
+    filename = f"{video['task_id']}_{video['video_id']}.mp4"
     ydl_opts = {
-        'outtmpl': os.path.join(output_path, '%(title)s.%(ext)s'),
+        'outtmpl': os.path.join(output_path, filename),
         'format': 'best',
     }
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
