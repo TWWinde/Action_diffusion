@@ -68,7 +68,7 @@ if coin:
 
         if not os.path.exists(vid_loc):
             os.mkdir(vid_loc)
-        os.system('youtube-dl -o ' + vid_loc + '/' + youtube_id + '.mp4' + ' -f best ' + url)
+        #os.system('youtube-dl -o ' + vid_loc + '/' + youtube_id + '.mp4' + ' -f best ' + url)
 
         filename = f"{youtube_id}.mp4"
         ydl_opts = {
