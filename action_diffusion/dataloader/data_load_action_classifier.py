@@ -35,9 +35,9 @@ class ActionDataset(Dataset):
         action_labels = info['steps_ids']
         video_feature = info['video_feature']
         text_feature = info['text_feature']
-        print(action_labels.shape)
-        print(video_feature.shape)
-        print(text_feature.shape)
+        #print(action_labels.shape)
+        #print(video_feature.shape)
+        #print(text_feature.shape)
         action_labels = torch.tensor(action_labels, dtype=torch.long)
        # action_labels = F.one_hot(action_labels, num_classes=self.num_classes).long()
         video_feature = torch.tensor(video_feature, dtype=torch.float32)
