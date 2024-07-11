@@ -174,8 +174,8 @@ def main_worker(gpu, args):
     )
 
     # create model
-    model = ResMLP(input=args.observation_dim, dim=args.observation_dim, class_num=args.class_dim)
-    # model = head(args.observation_dim, args.class_dim)
+   # model = ResMLP(input=args.observation_dim, dim=args.observation_dim, class_num=args.class_dim)
+    model = head(args.observation_dim, args.class_dim)
 
     if args.pretrain_cnn_path:
         net_data = torch.load(args.pretrain_cnn_path)
