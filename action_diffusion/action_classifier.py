@@ -240,8 +240,8 @@ def main_worker(gpu, args):
 
             losses_reduced = losses.cuda().item()
             acc_reduced = acc.cuda().item()
-            print('acc', acc_reduced)
-            print('losses', losses_reduced)
+            print('test acc', acc_reduced)
+            print('test losses', losses_reduced)
             logs = OrderedDict()
             logs['Val/EpochLoss'] = losses_reduced
             logs['Val/EpochAcc@1'] = acc_reduced
@@ -267,7 +267,8 @@ def main_worker(gpu, args):
         # train for one epoch
         if (epoch + 1) % 2 == 0:  # calculate on training set
             losses, acc_top1 = train(train_loader, args.n_train_steps, model, scheduler, args, optimizer, True)
-
+            print('train losses', losses)
+            print('train acc_top1', acc_top1)
 
             logs = OrderedDict()
             logs['Train/EpochLoss'] = losses #losses_reduced
