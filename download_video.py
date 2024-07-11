@@ -39,6 +39,8 @@ def download_video(video_url, output_path, video):
 
 cross_task=False
 coin = True
+
+
 if cross_task:
     videos = read_videos('/scratch/users/tang/data/crosstask_release/videos.csv')
 

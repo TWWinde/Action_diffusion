@@ -1,4 +1,5 @@
 import sys
+
 sys.path.append('/scratch/users/tang/fairseq/examples/MMPT')
 import os
 import re
@@ -11,6 +12,7 @@ import pandas as pd
 import torch
 from mmpt.models import MMPTModel
 import math
+
 
 def read_srt_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -113,16 +115,16 @@ def read_csv(path):
 def get_video_clip(path, start, end, num=16, also_end=True):
     video = VideoFileClip(path)
     fps = video.fps
-    start_frame, end_frame = int(start*fps), int(end*fps)
-    #print(f"Original video size: {video.size}")
-    #print(f"Video FPS: {video.fps}")
-    #print(start, end)
+    start_frame, end_frame = int(start * fps), int(end * fps)
+    # print(f"Original video size: {video.size}")
+    # print(f"Video FPS: {video.fps}")
+    # print(start, end)
     start_clip, end_clip = [], []
 
     for i, frame in enumerate(video.iter_frames()):
-        if start_frame-(num-2) <= i <= start_frame+1:
+        if start_frame - (num - 2) <= i <= start_frame + 1:
             start_clip.append(frame)
-        elif end_frame-1 <= i <= end_frame+(num-2) and also_end:
+        elif end_frame - 1 <= i <= end_frame + (num - 2) and also_end:
             end_clip.append(frame)
 
     return np.array(start_clip), np.array(end_clip)
@@ -352,11 +354,10 @@ class_list = {
     }
 }
 
-
 if __name__ == '__main__':
     root_dir = '/scratch/users/tang/data/niv'
-    #save_root_path = '/scratch/users/tang/data/niv/processed_data'
-    save_root_path = '/scratch/users/tang/data/niv/processed_data_16_onlystart'
+    # save_root_path = '/scratch/users/tang/data/niv/processed_data'
+    save_root_path = '/scratch/users/tang/data/niv/processed_data_16_onlystart_pooled'
     os.makedirs(save_root_path, exist_ok=True)
     video_paths = get_video_path(root_dir)
     model, tokenizer, aligner = MMPTModel.from_pretrained(
@@ -381,7 +382,7 @@ if __name__ == '__main__':
                 end_seconds = math.ceil(row['End'])
                 extracted_text = get_subtitles_in_time_range(subtitles, start_seconds, end_seconds)
                 start_clip, end_clip = get_video_clip(video_path, start_seconds, end_seconds, num=16, also_end=also_end)
-                if start_clip.size == 0 or end_clip.size == 0:
+                if start_clip.size == 0:  # or end_clip.size == 0:
                     continue
                 start_clip = preprocess_frames(start_clip)
                 if also_end:
@@ -389,27 +390,29 @@ if __name__ == '__main__':
                 details = False
                 print(f"Action: {action}")
                 if details:
-                    print(f"FPS: {fps}")
-                    print(f"Action: {action}")
                     print(f"Start: {start_seconds} seconds")
                     print(f"End: {end_seconds} seconds")
                     print(video_input.shape)
                     print(video_input)
                     print(f"Extracted Text: {extracted_text}\n")
-                
+
                 # B, T, FPS, H, W, C (VideoCLIP is trained on 30 fps of s3d)
-                #video_frames = torch.randn(1, 1, 4, 224, 224, 3)
-                    
+                # video_frames = torch.randn(1, 1, 4, 224, 224, 3)
+
                 caps, cmasks = aligner._build_text_seq(tokenizer(extracted_text, add_special_tokens=False)["input_ids"])
                 caps, cmasks = caps[None, :], cmasks[None, :]  # bsz=1
-                #start_clip = start_clip.to(torch.float64)
+                # start_clip = start_clip.to(torch.float64)
                 with torch.no_grad():
                     output1 = model(start_clip, caps, cmasks, return_score=False)
-                    output2 = model(end_clip, caps, cmasks, return_score=False)
+                    if also_end:
+                        output2 = model(end_clip, caps, cmasks, return_score=False)
 
-                start_video_feature, start_text_feature = output1["video"], output1["text"]  # torch.Size([1, 768])
+                start_video_feature, start_text_feature = output1["pooled_video"], output1[
+                    "pooled_text"]  # torch.Size([1, 768])
                 start_video_feature_np = start_video_feature.cpu().numpy()
                 start_text_feature_np = start_text_feature.cpu().numpy()
+                print(start_video_feature_np.shape)
+                print(start_text_feature_np.shape)
                 data_dict_start = {
                     'file_name': file_name,
                     'steps_ids': steps_ids,
@@ -444,8 +447,8 @@ if __name__ == '__main__':
 
 
 
-                
-                
-                
+
+
+
 
 
