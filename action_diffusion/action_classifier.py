@@ -190,8 +190,7 @@ def main_worker(gpu, args):
     scheduler = get_lr_schedule_with_warmup(args, optimizer, int(args.n_train_steps * args.epochs))
 
     checkpoint_dir = os.path.join(os.path.dirname(__file__), 'checkpoint_mlp', args.checkpoint_dir)
-    if args.checkpoint_dir != '' and not (os.path.isdir(checkpoint_dir)) and args.rank == 0:
-        os.mkdir(checkpoint_dir)
+    os.makedirs(checkpoint_dir, exist_ok=True)
 
     if args.resume:
         checkpoint_path = get_last_checkpoint(checkpoint_dir)
