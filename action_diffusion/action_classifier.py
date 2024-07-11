@@ -95,9 +95,9 @@ def l2_regularization(model, l2_alpha):
 
 
 class ResMLP(nn.Module):
-    def __init__(self, input=9600, dim=3200, expansion_factor=4, depth=4, class_num=18):
+    def __init__(self, input=9600, dim=3200, expansion_factor=4, depth=3, class_num=18):
         super().__init__()
-        wrapper = lambda i, fn: PreAffinePostLayerScale(dim, i + 1, fn)  # 封装
+        wrapper = lambda i, fn: PreAffinePostLayerScale(dim, i + 1, fn)
         self.embedding = nn.Linear(input, dim)
         self.mlp = nn.Sequential()
         for i in range(depth):
@@ -150,10 +150,9 @@ def main_worker(gpu, args):
     # Data loading code
     dataset = ActionDataset(args.root)
     train_size = int(0.9 * len(dataset))
-    print('################',len(dataset))
+    print('################dataset size',len(dataset), '#################')
     test_size = len(dataset) - train_size
     train_dataset, test_dataset = random_split(dataset, [train_size, test_size])
-
 
     train_sampler = None
     test_sampler = None
