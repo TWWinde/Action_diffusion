@@ -357,10 +357,11 @@ def train(train_loader, n_train_steps, model, scheduler, args, optimizer, if_cal
             with torch.set_grad_enabled(True):
 
                 global_img_tensors = batch[1].cuda()
+                bs = global_img_tensors.shape[0]
                 if len(global_img_tensors.size()) == 3:
                     batch_size_current, T, dim = global_img_tensors.size()
                 else:
-                    global_img_tensors = global_img_tensors.view(0, 1, -1)
+                    global_img_tensors = global_img_tensors.view(bs, 1, -1)
                     bs, T, dim = global_img_tensors.shape
                     print(global_img_tensors.size())
                 observations = torch.zeros(bs, 2, dim)
