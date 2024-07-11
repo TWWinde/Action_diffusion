@@ -5,7 +5,7 @@ import json
 json_path = "/scratch/users/tang/data/COIN/COIN.json"
 data = json.loads(json_path)
 
-for video_id, video_info in data['database'].items():
+for video_id in data['database'].items():
     print(f"Video ID: {video_id}")
     print(f"  Recipe Type: {video_info['recipe_type']}")
     print(f"  Class: {video_info['class']}")
