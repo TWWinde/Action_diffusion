@@ -311,7 +311,11 @@ def test(val_loader, model):
     acc_top1 = AverageMeter()
     for i_batch, sample_batch in enumerate(val_loader):
         global_img_tensors = sample_batch[1].cuda()
-        batch_size_current, T, dim = global_img_tensors.size()
+        if len(global_img_tensors.size())==3:
+            batch_size_current, T, dim = global_img_tensors.size()
+        else:
+            global_img_tensors = global_img_tensors.view(0, 1, -1)
+            print(global_img_tensors.size())
         task_class = sample_batch[0].cuda()
 
         with torch.no_grad():
