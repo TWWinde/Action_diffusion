@@ -1,5 +1,5 @@
-import json
 import os
+import csv
 from skimage.transform import resize
 import numpy as np
 import torch
@@ -46,31 +46,80 @@ def preprocess_frames(video_array, target_size=(224, 224), num=16):
     return video_input.float()
 
 
+def parse_tasks_file(file_path):
+    tasks = {}
+    with open(file_path, 'r') as file:
+        lines = file.readlines()
+        task = {}
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            if line.isdigit() and 'Task ID' not in task:
+                task['Task ID'] = line
+            elif line.startswith("http"):
+                task['URL'] = line
+            elif line.isnumeric() and 'Number of steps' not in task:
+                task['Number of steps'] = int(line)
+            elif 'Task ID' in task and 'Task name' not in task:
+                task['Task name'] = line
+            else:
+                task['Steps'] = line.split(',')
+                tasks[task['Task ID']] = task
+                task = {}
+
+    return tasks
+
+
+def parse_annotation_file(file_path):
+    annotations = []
+    with open(file_path, 'r') as file:
+        reader = csv.reader(file)
+        for row in reader:
+            annotations.append({'Step number': int(row[0]), 'Start': float(row[1]), 'End': float(row[2])})
+    return annotations
+
+
+
 if __name__ =="__main__":
-    root_path = "/scratch/users/tang/data/COIN/videos"
-    json_path = "/scratch/users/tang/data/COIN/COIN.json"
-    save_root_path = "/scratch/users/tang/data/COIN/"
-    with open(json_path, 'r') as f:
-        file_content = f.read()
-        if not file_content.strip():
-            raise ValueError("JSON file is empty")
-        data = json.loads(file_content)
+    root_path = "/scratch/users/tang/data/crosstask_release"
+    annotation_path = "/scratch/users/tang/data/crosstask_release/annotations"
+    video_path = "/scratch/users/tang/data/crosstask_release/videos"
+    save_root_path = "/scratch/users/tang/crosstask_release/processed/"
     model, tokenizer, aligner = MMPTModel.from_pretrained(
         "/scratch/users/tang/fairseq/examples/MMPT/projects/retri/videoclip/how2.yaml")
     model.eval()
     also_end = False
-    for video_id, video_info in data['database'].items():
-        data_list = {}
-        task_id = video_info['recipe_type']
-        video_path = os.path.join(root_path, str(task_id), video_id + ".mp4")
-        try:
-            video = VideoFileClip(video_path)
-        except:
-            print(video_path, 'was not found')
-        for clip in video_info['annotation']:
-            action_id = clip['id']
-            start_time, end_time = clip['segment'][0], clip['segment'][1]
-            text = clip['label']
+    primary_tasks = parse_tasks_file('/scratch/users/tang/data/crosstask_release/tasks_primary.txt')
+    related_tasks = parse_tasks_file('/scratch/users/tang/data/crosstask_release/tasks_related.txt')
+    primary_tasks.update(related_tasks)
+    video_list = os.listdir(video_path)
+    n=0
+    action_list = {}
+    for video_name in video_list:
+        data_list = []
+        anotation_name = video_name.split('.')[0]+'.csv'
+        anotation_name_path = os.path.join(annotation_path, anotation_name)
+        video_name_path = os.path.join(video_path, video_name)
+        if os.path.exists(anotation_name_path):
+            annotations = parse_annotation_file(anotation_name_path)
+        else:
+            continue
+        task_id = video_name.split('_')[0]
+        video = VideoFileClip(video_name_path)
+
+        for clip in annotations:
+            step_number = clip['Step number']
+            step_name = primary_tasks[task_id]['Steps'][step_number-1]
+            if step_name not in action_list:
+                action_list[step_name] = n
+                action_id = n
+                n+=1
+            else:
+                action_id = action_list[step_name]
+
+            start_time, end_time = clip['Start'], clip['End']
+            text = step_name
             start_clip, end_clip = get_video_clip(video, start_time, end_time)
             start_video_input = preprocess_frames(start_clip, target_size=(224, 224), num=16)
             if also_end:
@@ -112,8 +161,8 @@ if __name__ =="__main__":
                 }
 
                 data_list.append(data_dict_end)
-    file_name = os.path.basename(video_path).split('.')[0] + '.npy'
-    save_path = os.path.join(save_root_path, file_name)
-    np.save(save_path, data_list)
+        file_name = os.path.basename(video_name_path).split('.')[0] + '.npy'
+        save_path = os.path.join(save_root_path, file_name)
+        np.save(save_path, data_list)
 
 
