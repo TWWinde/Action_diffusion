@@ -81,8 +81,7 @@ if __name__ =="__main__":
                 if also_end:
                     output2 = model(end_clip, caps, cmasks, return_score=False)
 
-            start_video_feature, start_text_feature = output1["pooled_video"], output1[
-                "pooled_text"]  # torch.Size([1, 768])
+            start_video_feature, start_text_feature = output1["pooled_video"], output1["pooled_text"]  # torch.Size([1, 768])
             start_video_feature_np = start_video_feature.cpu().numpy()
             start_text_feature_np = start_text_feature.cpu().numpy()
             print(start_video_feature_np.shape)
