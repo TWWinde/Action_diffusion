@@ -237,7 +237,6 @@ def main_worker(gpu, args):
     print('start training')
 
     for epoch in trange(args.start_epoch, args.epochs):
-        print(epoch)
 
         if (epoch + 1) % 2 == 0 and args.evaluate:
             losses, acc = test(test_loader, model)
@@ -267,7 +266,6 @@ def main_worker(gpu, args):
                 max_eva = acc_reduced
                 old_max_epoch = epoch + 1
 
-
         # train for one epoch
         if (epoch + 1) % 2 == 0:  # calculate on training set
             losses, acc_top1 = train(train_loader, args.n_train_steps, model, scheduler, args, optimizer, True)
@@ -284,7 +282,7 @@ def main_worker(gpu, args):
         else:
             losses = train(train_loader, args.n_train_steps, model, scheduler, args, optimizer, False).cuda()
             losses_reduced = losses.item()     #  reduce_tensor(losses).item()
-
+            print('train loss', losses_reduced)
             print('lrs:')
             for p in optimizer.param_groups:
                 print(p['lr'])
@@ -310,41 +308,6 @@ def main_worker(gpu, args):
                 )
 
 
-def test(val_loader, model):
-    model.eval()
-    losses = AverageMeter()
-    acc_top1 = AverageMeter()
-    for i_batch, sample_batch in enumerate(val_loader):
-        global_img_tensors = sample_batch[1].cuda()
-        if len(global_img_tensors.size())==3:
-            batch_size_current, T, dim = global_img_tensors.size()
-        else:
-            global_img_tensors = global_img_tensors.view(0, 1, -1)
-            print(global_img_tensors.size())
-        task_class = sample_batch[0].cuda()
-
-        with torch.no_grad():
-            task_class = task_class.view(-1)
-            observations = torch.zeros(batch_size_current, 2, dim)
-            observations[:, 0, :] = global_img_tensors[:, 0, :]
-            observations[:, 1, :] = global_img_tensors[:, -1, :]
-
-            task_s = model(observations.cuda())  # [bs, 18]
-            task_class_one_hot = task_class
-
-            # loss = F.mse_loss(task_s, task_class_one_hot.cuda())
-            loss = F.cross_entropy(task_s, task_class_one_hot.cuda())
-
-            task_pred = task_s.argmax(dim=-1)
-            correct = task_pred.eq(task_class)
-            acc = torch.sum(correct) / batch_size_current * 100
-
-        losses.update(loss.item(), batch_size_current)
-        acc_top1.update(acc.item(), batch_size_current)
-
-    return torch.tensor(losses.avg), torch.tensor(acc_top1.avg)
-
-
 def train(train_loader, n_train_steps, model, scheduler, args, optimizer, if_calculate_acc):
     model.train()
     losses = AverageMeter()
@@ -354,7 +317,7 @@ def train(train_loader, n_train_steps, model, scheduler, args, optimizer, if_cal
         for i in range(args.gradient_accumulate_every):
             batch = next(train_loader_)
             #print(batch)
-            #print(batch[0].shape)
+            print(batch[0].shape)
             #print(batch[1].shape)
             #print(batch[2].shape)
 
@@ -395,6 +358,42 @@ def train(train_loader, n_train_steps, model, scheduler, args, optimizer, if_cal
 
     else:
         return torch.tensor(losses.avg)
+
+
+def test(val_loader, model):
+    model.eval()
+    losses = AverageMeter()
+    acc_top1 = AverageMeter()
+    for i_batch, sample_batch in enumerate(val_loader):
+        global_img_tensors = sample_batch[1].cuda()
+        if len(global_img_tensors.size())==3:
+            batch_size_current, T, dim = global_img_tensors.size()
+        else:
+            global_img_tensors = global_img_tensors.view(0, 1, -1)
+            print(global_img_tensors.size())
+        task_class = sample_batch[0].cuda()
+
+        with torch.no_grad():
+            task_class = task_class.view(-1)
+            observations = torch.zeros(batch_size_current, 2, dim)
+            observations[:, 0, :] = global_img_tensors[:, 0, :]
+            observations[:, 1, :] = global_img_tensors[:, -1, :]
+
+            task_s = model(observations.cuda())  # [bs, 18]
+            task_class_one_hot = task_class
+
+            # loss = F.mse_loss(task_s, task_class_one_hot.cuda())
+            loss = F.cross_entropy(task_s, task_class_one_hot.cuda())
+
+            task_pred = task_s.argmax(dim=-1)
+            correct = task_pred.eq(task_class)
+            acc = torch.sum(correct) / batch_size_current * 100
+
+        losses.update(loss.item(), batch_size_current)
+        acc_top1.update(acc.item(), batch_size_current)
+
+    return torch.tensor(losses.avg), torch.tensor(acc_top1.avg)
+
 
 
 def log(output, args):
