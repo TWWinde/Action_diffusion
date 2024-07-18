@@ -1,4 +1,4 @@
-python3 /scratch/users/tang/Action_diffusion/action_diffusion/action_classifier.py \
+python3 /scratch/users/tang/data/niv/processed_data_16_onlystart_pooled_aug \
 --root /scratch/users/tang/data/niv/processed_data_16_onlystart_pooled \
 --num_thread_reader 8 \
 --cudnn_benchmark 1 \
@@ -10,5 +10,5 @@ python3 /scratch/users/tang/Action_diffusion/action_diffusion/action_classifier.
 --dataset crosstask \
 --resume \
 --horizon 3 \
---class_dim 5 \
+--class_dim 48 \
 --observation_dim 768
