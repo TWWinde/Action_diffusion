@@ -20,9 +20,9 @@ class ActionDataset(Dataset):
         for file_idx, file_path in enumerate(self.file_path_list):
             data = np.load(file_path, allow_pickle=True)
             for sample_idx in range(len(data)):
-                print(data[sample_idx]['steps_ids'])
                 if data[sample_idx]['steps_ids'] ==0 or data[sample_idx]['steps_ids'] ==10 or data[sample_idx]['steps_ids'] ==20 or data[sample_idx]['steps_ids'] ==30 or data[sample_idx]['steps_ids'] ==40:
                     index_map.append((file_idx, sample_idx))
+                    print(data[sample_idx]['steps_ids'])
 
         return index_map
 
