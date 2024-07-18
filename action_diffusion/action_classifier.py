@@ -279,6 +279,7 @@ def main_worker(gpu, args):
                 #tb_logger.log_scalar(value, key, epoch + 1)
 
             #tb_logger.flush()
+            pass
         else:
             losses = train(train_loader, args.n_train_steps, model, scheduler, args, optimizer, False).cuda()
             losses_reduced = losses.item()     #  reduce_tensor(losses).item()
