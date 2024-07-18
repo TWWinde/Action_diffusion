@@ -176,6 +176,7 @@ def main_worker(gpu, args):
     # create model
    # model = ResMLP(input=args.observation_dim, dim=args.observation_dim, class_num=args.class_dim)
     model = head(args.observation_dim, args.class_dim)
+    print('model created')
 
     if args.pretrain_cnn_path:
         net_data = torch.load(args.pretrain_cnn_path)
@@ -231,7 +232,7 @@ def main_worker(gpu, args):
     max_eva = 0
     old_max_epoch = 0
     save_max = os.path.join(os.path.dirname(__file__), 'save_max_mlp')
-
+    print('start training')
     for epoch in range(args.start_epoch, args.epochs):
 
         if (epoch + 1) % 2 == 0 and args.evaluate:
