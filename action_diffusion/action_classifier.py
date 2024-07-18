@@ -314,9 +314,9 @@ def train(train_loader, n_train_steps, model, scheduler, args, optimizer, if_cal
     train_loader_ = cycle(train_loader)
     optimizer.zero_grad()
     for step in range(n_train_steps):
-        for i in range(args.gradient_accumulate_every):
+        for i, batch in train_loader:
             print(i)
-            batch = next(train_loader_)
+            #batch = next(train_loader_)
             #print(batch)
             print(batch[0].shape)
             #print(batch[1].shape)
