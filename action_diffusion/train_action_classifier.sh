@@ -10,5 +10,5 @@ python3 /scratch/users/tang/Action_diffusion/action_diffusion/action_classifier.
 --dataset crosstask \
 --resume \
 --horizon 3 \
---class_dim 5 \ #48
+--class_dim 5 \
 --observation_dim 768
