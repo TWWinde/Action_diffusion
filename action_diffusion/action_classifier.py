@@ -268,17 +268,17 @@ def main_worker(gpu, args):
 
         # train for one epoch
         if (epoch + 1) % 2 == 0:  # calculate on training set
-            losses, acc_top1 = train(train_loader, args.n_train_steps, model, scheduler, args, optimizer, True)
-            print('train losses', losses)
-            print('train acc_top1', acc_top1)
+            #losses, acc_top1 = train(train_loader, args.n_train_steps, model, scheduler, args, optimizer, True)
+            #print('train losses', losses)
+            #print('train acc_top1', acc_top1)
 
-            logs = OrderedDict()
-            logs['Train/EpochLoss'] = losses #losses_reduced
-            logs['Train/EpochAcc@1'] = acc_top1 #acc_top1_reduced
-            for key, value in logs.items():
-                tb_logger.log_scalar(value, key, epoch + 1)
+            #logs = OrderedDict()
+            #logs['Train/EpochLoss'] = losses #losses_reduced
+            #logs['Train/EpochAcc@1'] = acc_top1 #acc_top1_reduced
+            #for key, value in logs.items():
+                #tb_logger.log_scalar(value, key, epoch + 1)
 
-            tb_logger.flush()
+            #tb_logger.flush()
         else:
             losses = train(train_loader, args.n_train_steps, model, scheduler, args, optimizer, False).cuda()
             losses_reduced = losses.item()     #  reduce_tensor(losses).item()
