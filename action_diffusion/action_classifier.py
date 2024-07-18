@@ -235,7 +235,9 @@ def main_worker(gpu, args):
     old_max_epoch = 0
     save_max = os.path.join(os.path.dirname(__file__), 'save_max_mlp')
     print('start training')
+
     for epoch in trange(args.start_epoch, args.epochs):
+        print(epoch)
 
         if (epoch + 1) % 2 == 0 and args.evaluate:
             losses, acc = test(test_loader, model)
