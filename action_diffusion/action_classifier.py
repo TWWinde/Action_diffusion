@@ -236,7 +236,7 @@ def main_worker(gpu, args):
     save_max = os.path.join(os.path.dirname(__file__), 'save_max_mlp')
     print('start training')
 
-    for epoch in trange(args.start_epoch, args.epochs):
+    for epoch in range(args.start_epoch, args.epochs):
 
         if (epoch + 1) % 2 == 0 and args.evaluate:
             losses, acc = test(test_loader, model)
@@ -314,7 +314,6 @@ def train(train_loader, n_train_steps, model, scheduler, args, optimizer, if_cal
     train_loader_ = cycle(train_loader)
     optimizer.zero_grad()
     for step in range(n_train_steps):
-        print(step)
         for i in range(args.gradient_accumulate_every):
             print(i)
             batch = next(train_loader_)
