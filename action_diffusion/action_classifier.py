@@ -341,6 +341,7 @@ def train(train_loader, n_train_steps, model, scheduler, args, optimizer, if_cal
                 task_class_one_hot = batch[0].cuda()
                 # loss = F.mse_loss(task_s, task_class_one_hot.cuda())
                 loss = F.cross_entropy(task_s, task_class_one_hot)
+                output = task_s
 
                 loss = loss / args.gradient_accumulate_every
             loss.backward()
@@ -352,11 +353,10 @@ def train(train_loader, n_train_steps, model, scheduler, args, optimizer, if_cal
 
     if if_calculate_acc:
         with torch.no_grad():
-            task_pred = task_s.argmax(dim=-1)
+            task_pred = output.argmax(dim=-1)
             correct = task_pred.eq(task_class_one_hot)
             acc = torch.sum(correct) / bs * 100
         return torch.tensor(losses.avg), torch.tensor(acc)
-
     else:
         return torch.tensor(losses.avg)
 
