@@ -22,7 +22,7 @@ class ActionDataset(Dataset):
             for sample_idx in range(len(data)):
                 if data[sample_idx]['steps_ids'] ==0 or data[sample_idx]['steps_ids'] ==10 or data[sample_idx]['steps_ids'] ==20 or data[sample_idx]['steps_ids'] ==30 or data[sample_idx]['steps_ids'] ==40:
                     index_map.append((file_idx, sample_idx))
-                    #print(data[sample_idx]['steps_ids'])
+                    print(data[sample_idx]['steps_ids']/10)
 
         return index_map
 
@@ -36,7 +36,6 @@ class ActionDataset(Dataset):
 
         info = data[sample_idx]
         action_labels = info['steps_ids']/10
-        print(action_labels)
         video_feature = info['video_feature']
         text_feature = info['text_feature']
         #print(action_labels.shape)
