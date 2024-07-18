@@ -20,7 +20,8 @@ class ActionDataset(Dataset):
         for file_idx, file_path in enumerate(self.file_path_list):
             data = np.load(file_path, allow_pickle=True)
             for sample_idx in range(len(data)):
-                index_map.append((file_idx, sample_idx))
+                if data['steps_ids'] ==0 or data['steps_ids'] ==10 or data['steps_ids'] ==20 or data['steps_ids'] ==30 or data['steps_ids'] ==40:
+                    index_map.append((file_idx, sample_idx))
         return index_map
 
     def __len__(self):
@@ -32,7 +33,7 @@ class ActionDataset(Dataset):
         data = np.load(file_path, allow_pickle=True)
 
         info = data[sample_idx]
-        action_labels = info['steps_ids']
+        action_labels = info['steps_ids']/10
         video_feature = info['video_feature']
         text_feature = info['text_feature']
         #print(action_labels.shape)
