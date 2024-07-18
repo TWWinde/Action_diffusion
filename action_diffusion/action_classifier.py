@@ -313,8 +313,8 @@ def train(train_loader, n_train_steps, model, scheduler, args, optimizer, if_cal
     losses = AverageMeter()
     train_loader_ = cycle(train_loader)
     optimizer.zero_grad()
-    for step in range(n_train_steps):
-        for i in range(args.gradient_accumulate_every):
+    for step in trange(n_train_steps):
+        for i in trange(args.gradient_accumulate_every):
             batch = next(train_loader_)
             #print(batch)
             print(batch[0].shape)
