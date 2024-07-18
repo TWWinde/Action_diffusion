@@ -60,7 +60,7 @@ if __name__ =="__main__":
     model.eval()
     also_end = False
     for video_id, video_info in data['database'].items():
-        data_list = {}
+        data_list = []
         task_id = video_info['recipe_type']
         video_path = os.path.join(root_path, str(task_id), video_id + ".mp4")
         try:
