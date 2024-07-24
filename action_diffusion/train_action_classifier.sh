@@ -1,5 +1,5 @@
 python3 /scratch/users/tang/Action_diffusion/action_diffusion/action_classifier.py \
---root /scratch/users/tang/data/niv/processed_data_16_onlystart_pooled_aug \
+--root /scratch/users/tang/data/niv/processed_data_16_onlystart_pooled_aug_x6 \
 --num_thread_reader 8 \
 --cudnn_benchmark 1 \
 --pin_memory \
