@@ -50,19 +50,20 @@ def preprocess_frames(video_array, target_size=(224, 224), num=16):
 
 
 if __name__ =="__main__":
-    root_path = "/scratch/users/tang/data/COIN/videos"
-    json_path = "/scratch/users/tang/data/COIN/COIN.json"
-    save_root_path = "/scratch/users/tang/data/COIN/processed"
+    root_path = "./data/COIN/videos"
+    json_path = "./data/COIN/COIN.json"
+    save_root_path = "./data/COIN/processed"
+    also_end = False
     os.makedirs(save_root_path, exist_ok=True)
+    model, tokenizer, aligner = MMPTModel.from_pretrained(
+        "./fairseq/examples/MMPT/projects/retri/videoclip/how2.yaml")
+    model.eval()
     with open(json_path, 'r') as f:
         file_content = f.read()
         if not file_content.strip():
             raise ValueError("JSON file is empty")
         data = json.loads(file_content)
-    model, tokenizer, aligner = MMPTModel.from_pretrained(
-        "/scratch/users/tang/fairseq/examples/MMPT/projects/retri/videoclip/how2.yaml")
-    model.eval()
-    also_end = False
+
     data_list = []
     for video_id, video_info in data['database'].items():
         print(video_id)
