@@ -46,8 +46,8 @@ git clone https://github.com/facebookresearch/fairseq.git
 
 cd /fairseq/examples/MMPT
 ```
-put the scripts `process_coin`, `process_crosstask`, `process_niv` under `cd /fairseq/examples/MMPT`
-
+put the scripts `process_coin.py`, `process_crosstask.py`, `process_niv.py` under `cd /fairseq/examples/MMPT`
+change the `save_root_path` and the times of data augmentation `aug_times`.
 
 
 ## Train

@@ -50,9 +50,15 @@ def preprocess_frames(video_array, target_size=(224, 224), num=16):
 
 
 if __name__ =="__main__":
+    aug_times = 1  # how many times do you want to augment the data
+    also_end = False
+    if also_end:
+        a = 'start_end'
+    else:
+        a = 'onlystart'
     root_path = "./data/COIN/videos"
     json_path = "./data/COIN/COIN.json"
-    save_root_path = "./data/COIN/processed"
+    save_root_path = f"./data/COIN/processed_{a}_x{aug_times}"
     also_end = False
     os.makedirs(save_root_path, exist_ok=True)
     model, tokenizer, aligner = MMPTModel.from_pretrained(
@@ -65,76 +71,75 @@ if __name__ =="__main__":
         data = json.loads(file_content)
 
     data_list = []
-    for video_id, video_info in data['database'].items():
-        print(video_id)
-        data_list = []
-        task_id = video_info['recipe_type']
-        video_path = os.path.join(root_path, str(task_id), video_id + ".mp4")
-        try:
+    for i in range(aug_times):
+        for video_id, video_info in data['database'].items():
+            print(video_id)
+            data_list = []
+            task_id = video_info['recipe_type']
+            video_path = os.path.join(root_path, str(task_id), video_id + ".mp4")
             try:
                 video = VideoFileClip(video_path)
-            except:
-                print(video_path, 'not found')
-                continue
-            for clip in video_info['annotation']:
-                action_id = clip['id']
-                print('action id', action_id)
-                start_time, end_time = clip['segment'][0], clip['segment'][1]
-                text = clip['label']
-                start_clip, end_clip = get_video_clip(video, start_time, end_time)
-                start_video_input = preprocess_frames(start_clip, target_size=(224, 224), num=16)
-                if start_video_input.shape != (1, 1, 16, 224, 224, 3):
-                    print('input error')
-                    continue
-                # print(start_video_input.shape)
-                if also_end:
-                    end_video_input = preprocess_frames(end_clip, target_size=(224, 224), num=16)
-                    if end_video_input.shape != (1, 1, 16, 224, 224, 3):
+                for clip in video_info['annotation']:
+                    action_id = clip['id']
+                    print('action id', action_id)
+                    start_time, end_time = clip['segment'][0], clip['segment'][1]
+                    text = clip['label']
+                    start_clip, end_clip = get_video_clip(video, start_time, end_time)
+                    start_video_input = preprocess_frames(start_clip, target_size=(224, 224), num=16)
+                    if start_video_input.shape != (1, 1, 16, 224, 224, 3):
                         print('input error')
                         continue
-
-                caps, cmasks = aligner._build_text_seq(tokenizer(text, add_special_tokens=False)["input_ids"])
-                caps, cmasks = caps[None, :], cmasks[None, :]  # bsz=1
-                # start_clip = start_clip.to(torch.float64)
-                with torch.no_grad():
-                    output1 = model(start_video_input, caps, cmasks, return_score=False)
+                    # print(start_video_input.shape)
                     if also_end:
-                        output2 = model(end_video_input, caps, cmasks, return_score=False)
+                        end_video_input = preprocess_frames(end_clip, target_size=(224, 224), num=16)
+                        if end_video_input.shape != (1, 1, 16, 224, 224, 3):
+                            print('input error')
+                            continue
 
-                start_video_feature, start_text_feature = output1["pooled_video"], output1[
-                    "pooled_text"]  # torch.Size([1, 768])
-                start_video_feature_np = start_video_feature.cpu().numpy()
-                start_text_feature_np = start_text_feature.cpu().numpy()
-                # print(start_video_feature_np.shape)
-                # print(start_text_feature_np.shape)
-                data_dict_start = {
-                    'steps_ids': action_id,
-                    'task_id': task_id,
-                    'video_feature': start_video_feature_np,
-                    'text_feature': start_text_feature_np,
-                    'start_end': 0
+                    caps, cmasks = aligner._build_text_seq(tokenizer(text, add_special_tokens=False)["input_ids"])
+                    caps, cmasks = caps[None, :], cmasks[None, :]  # bsz=1
+                    # start_clip = start_clip.to(torch.float64)
+                    with torch.no_grad():
+                        output1 = model(start_video_input, caps, cmasks, return_score=False)
+                        if also_end:
+                            output2 = model(end_video_input, caps, cmasks, return_score=False)
 
-                }
-                data_list.append(data_dict_start)
-                if also_end:
-                    end_video_feature, end_text_feature = output2["video"], output2["text"]
-                    end_video_feature_np = end_video_feature.cpu().numpy()
-                    end_text_feature_np = end_text_feature.cpu().numpy()
-                    data_dict_end = {
+                    start_video_feature, start_text_feature = output1["pooled_video"], output1[
+                        "pooled_text"]  # torch.Size([1, 768])
+                    start_video_feature_np = start_video_feature.cpu().numpy()
+                    start_text_feature_np = start_text_feature.cpu().numpy()
+                    # print(start_video_feature_np.shape)
+                    # print(start_text_feature_np.shape)
+                    data_dict_start = {
                         'steps_ids': action_id,
                         'task_id': task_id,
                         'video_feature': start_video_feature_np,
                         'text_feature': start_text_feature_np,
-                        'start_end': 1
+                        'start_end': 0
 
                     }
+                    data_list.append(data_dict_start)
+                    if also_end:
+                        end_video_feature, end_text_feature = output2["video"], output2["text"]
+                        end_video_feature_np = end_video_feature.cpu().numpy()
+                        end_text_feature_np = end_text_feature.cpu().numpy()
+                        data_dict_end = {
+                            'steps_ids': action_id,
+                            'task_id': task_id,
+                            'video_feature': start_video_feature_np,
+                            'text_feature': start_text_feature_np,
+                            'start_end': 1
 
-                    data_list.append(data_dict_end)
-        except:
-            continue
-                    
-        file_name = os.path.basename(video_path).split('.')[0] + '.npy'
-        save_path = os.path.join(save_root_path, file_name)
-        np.save(save_path, data_list)
+                        }
+
+                        data_list.append(data_dict_end)
+            except:
+                continue
+
+            file_name = os.path.basename(video_path).split('.')[0] + f'_{i}.npy'
+            save_path = os.path.join(save_root_path, file_name)
+            np.save(save_path, data_list)
+
+
 
 
