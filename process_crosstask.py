@@ -6,6 +6,7 @@ import torch
 from moviepy.video.io.VideoFileClip import VideoFileClip
 from mmpt.models import MMPTModel
 
+
 def get_video_clip(video, start, end, num=16, also_end=True):
 
     fps = video.fps
@@ -33,8 +34,10 @@ def preprocess_frames(video_array, target_size=(224, 224), num=16):
 
     preprocessed_array = np.array(preprocessed_frames)
     num_frames = preprocessed_array.shape[0]
+    if num_frames < (num / 2):
+        return []
     if num_frames % num != 0:
-        num_additional_frames = num - (num_frames % 4)
+        num_additional_frames = num - (num_frames % num)
         black_frame = np.zeros((224, 224, 3), dtype=np.float32)
         for _ in range(num_additional_frames):
             preprocessed_frames.append(black_frame)
@@ -85,7 +88,8 @@ if __name__ =="__main__":
     root_path = "/scratch/users/tang/data/crosstask_release"
     annotation_path = "/scratch/users/tang/data/crosstask_release/annotations"
     video_path = "/scratch/users/tang/data/crosstask_release/videos"
-    save_root_path = "/scratch/users/tang/crosstask_release/processed/"
+    save_root_path = "/scratch/users/tang/data/crosstask_release/processed/"
+    os.makedirs(save_root_path, exist_ok=True)
     model, tokenizer, aligner = MMPTModel.from_pretrained(
         "/scratch/users/tang/fairseq/examples/MMPT/projects/retri/videoclip/how2.yaml")
     model.eval()
@@ -97,72 +101,90 @@ if __name__ =="__main__":
     n=0
     action_list = {}
     for video_name in video_list:
-        data_list = []
-        anotation_name = video_name.split('.')[0]+'.csv'
-        anotation_name_path = os.path.join(annotation_path, anotation_name)
-        video_name_path = os.path.join(video_path, video_name)
-        if os.path.exists(anotation_name_path):
-            annotations = parse_annotation_file(anotation_name_path)
-        else:
-            continue
-        task_id = video_name.split('_')[0]
-        video = VideoFileClip(video_name_path)
-
-        for clip in annotations:
-            step_number = clip['Step number']
-            step_name = primary_tasks[task_id]['Steps'][step_number-1]
-            if step_name not in action_list:
-                action_list[step_name] = n
-                action_id = n
-                n+=1
+        try:
+            if not video_name.endswith('mp4'):
+                continue
+            data_list = []
+            anotation_name = video_name.split('.')[0] + '.csv'
+            anotation_name_path = os.path.join(annotation_path, anotation_name)
+            video_name_path = os.path.join(video_path, video_name)
+            if os.path.exists(anotation_name_path):
+                annotations = parse_annotation_file(anotation_name_path)
             else:
-                action_id = action_list[step_name]
+                continue
+            task_id = video_name.split('_')[0]
+            video = VideoFileClip(video_name_path)
 
-            start_time, end_time = clip['Start'], clip['End']
-            text = step_name
-            start_clip, end_clip = get_video_clip(video, start_time, end_time)
-            start_video_input = preprocess_frames(start_clip, target_size=(224, 224), num=16)
-            if also_end:
-                end_video_input = preprocess_frames(end_clip, target_size=(224, 224), num=16)
+            for clip in annotations:
+                step_number = clip['Step number']
+                step_name = primary_tasks[task_id]['Steps'][step_number - 1]
+                print(step_name)
+                if step_name not in action_list:
+                    action_list[step_name] = n
+                    action_id = n
+                    print('new action id', n)
+                    n += 1
+                else:
+                    action_id = action_list[step_name]
 
-            caps, cmasks = aligner._build_text_seq(tokenizer(text, add_special_tokens=False)["input_ids"])
-            caps, cmasks = caps[None, :], cmasks[None, :]  # bsz=1
-            # start_clip = start_clip.to(torch.float64)
-            with torch.no_grad():
-                output1 = model(start_clip, caps, cmasks, return_score=False)
+                start_time, end_time = clip['Start'], clip['End']
+                text = step_name
+                start_clip, end_clip = get_video_clip(video, start_time, end_time)
+                start_video_input = preprocess_frames(start_clip, target_size=(224, 224), num=16)
+                if start_video_input.shape != (1, 1, 16, 224, 224, 3):
+                    print('input error')
+                    continue
                 if also_end:
-                    output2 = model(end_clip, caps, cmasks, return_score=False)
+                    end_video_input = preprocess_frames(end_clip, target_size=(224, 224), num=16)
+                    if end_video_input.shape != (1, 1, 16, 224, 224, 3):
+                        print('input error')
+                        continue
 
-            start_video_feature, start_text_feature = output1["pooled_video"], output1["pooled_text"]  # torch.Size([1, 768])
-            start_video_feature_np = start_video_feature.cpu().numpy()
-            start_text_feature_np = start_text_feature.cpu().numpy()
-            print(start_video_feature_np.shape)
-            print(start_text_feature_np.shape)
-            data_dict_start = {
-                'steps_ids': action_id,
-                'task_id': task_id,
-                'video_feature': start_video_feature_np,
-                'text_feature': start_text_feature_np,
-                'start_end': 0
+                caps, cmasks = aligner._build_text_seq(tokenizer(text, add_special_tokens=False)["input_ids"])
+                caps, cmasks = caps[None, :], cmasks[None, :]  # bsz=1
+                # start_clip = start_clip.to(torch.float64)
+                with torch.no_grad():
+                    output1 = model(start_video_input, caps, cmasks, return_score=False)
+                    if also_end:
+                        output2 = model(end_video_input, caps, cmasks, return_score=False)
 
-            }
-            data_list.append(data_dict_start)
-            if also_end:
-                end_video_feature, end_text_feature = output2["video"], output2["text"]
-                end_video_feature_np = end_video_feature.cpu().numpy()
-                end_text_feature_np = end_text_feature.cpu().numpy()
-                data_dict_end = {
+                start_video_feature, start_text_feature = output1["pooled_video"], output1[
+                    "pooled_text"]  # torch.Size([1, 768])
+                start_video_feature_np = start_video_feature.cpu().numpy()
+                start_text_feature_np = start_text_feature.cpu().numpy()
+                print(start_video_feature_np.shape)
+                print(start_text_feature_np.shape)
+                data_dict_start = {
                     'steps_ids': action_id,
                     'task_id': task_id,
                     'video_feature': start_video_feature_np,
                     'text_feature': start_text_feature_np,
-                    'start_end': 1
+                    'start_end': 0
 
                 }
+                data_list.append(data_dict_start)
+                if also_end:
+                    end_video_feature, end_text_feature = output2["video"], output2["text"]
+                    end_video_feature_np = end_video_feature.cpu().numpy()
+                    end_text_feature_np = end_text_feature.cpu().numpy()
+                    data_dict_end = {
+                        'steps_ids': action_id,
+                        'task_id': task_id,
+                        'video_feature': start_video_feature_np,
+                        'text_feature': start_text_feature_np,
+                        'start_end': 1
 
-                data_list.append(data_dict_end)
+                    }
+
+                    data_list.append(data_dict_end)
+        except:
+            continue
+
         file_name = os.path.basename(video_name_path).split('.')[0] + '.npy'
         save_path = os.path.join(save_root_path, file_name)
         np.save(save_path, data_list)
+        file_name = 'class_list.npy'
+        save_path = os.path.join(save_root_path, file_name)
+        np.save(save_path, action_list)
 
 
