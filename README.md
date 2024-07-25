@@ -40,40 +40,48 @@ located in
 ## Features Extraction
 
 We implement [VideoCLIP](https://github.com/facebookresearch/fairseq/tree/main/examples/MMPT#readme) model to extract feature
+follow the README to download the checkpoint to files correspondingly.
+
 
 ```
-git clone https://github.com/facebookresearch/fairseq.git
+git clone https://github.com/pytorch/fairseq
+cd fairseq
+pip install -e .  # also optionally follow fairseq README for apex installation for fp16 training.
+export MKL_THREADING_LAYER=GNU  # fairseq may need this for numpy.
 
-cd /fairseq/examples/MMPT
+cd examples/MMPT  # MMPT can be in any folder, not necessarily under fairseq/examples.
+pip install -e .
+
 ```
+### Download Checkpoints
+
+VideoCLIP use pre-trained [S3D](https://github.com/antoine77340/S3D_HowTo100M) for video feature extraction. Please place the models as `pretrained_models/s3d_dict.npy` and `pretrained_models/s3d_howto100m.pth`.
+
+Download VideoCLIP checkpoint `https://dl.fbaipublicfiles.com/MMPT/retri/videoclip/checkpoint_best.pt` to `runs/retri/videoclip` .
+
+#### Demo of Inference
+run `python locallaunch.py projects/retri/videoclip.yaml --dryrun` to get all `.yaml`s for VideoCLIP.
+
+
 put the scripts `process_coin.py`, `process_crosstask.py`, `process_niv.py` under `cd /fairseq/examples/MMPT`
 change the `save_root_path` and the times of data augmentation `aug_times`.
 
+```
+cd /fairseq/examples/MMPT
+
+python process_coin.py
+```
+run the script to get the extracted features and save them to .npy files. 
 
 ## Train
+### Dataloder
+the corresponding dataloader is `data_load_action_classifier` 
 
-### Task Predicion
-
-Set arguments in `train_mlp.sh`. Train task prediction model for each dataset. Set `--class_dim, --action_dim, --observation_dim` accordingly.  For horizon `T={3,4,5,6}`, set `--horizon, --json_path_val ,--json_path_train` accordingly.
-
-```
-sh train_mlp.sh
-```
-
-Set the checkpoint path in `temp.py` via `--checkpoint_mlp`
-
-
-### Diffusion Model
-
-Set `dataset, horizon` in `train.sh` to corresponding datasets and time horizons for training. Set `mask_type` to `multi_add` to use multiple-add noise mask or `single_add` to use single-add noise mask. Set `attn` to `WithAttention` to use UNet with attention or `NoAttention` to use UNet without attention.
-
-To train the model, run
+### Set arguments 
+Set arguments in `train_action_classifer.sh`. Train task prediction model for each dataset. Set `--class_dim, --action_dim, --observation_dim` accordingly.
+ To train the model, run
 
 ```
-sh train.sh
+sh train_action_classifer.sh
 ```
 
-## Inference
-
-Set `dataset, horizon` in `inference.sh` to corresponding datasets and time horizons for training. Set `checkpoint_diff` to the pre-trained model.
-Set `mask_type` to `multi_add` to use multiple-add noise mask or `single_add` to use single-add noise mask. Set `attn` to `WithAttention` to use UNet with attention or `NoAttention` to use UNet without attention.
