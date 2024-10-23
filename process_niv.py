@@ -13,6 +13,7 @@ from mmpt.models import MMPTModel
 import math
 import cv2
 import random
+import json
 
 def read_srt_file(file_path):
     with open(file_path, 'r', encoding='utf-8') as file:
@@ -436,21 +437,44 @@ class_list = {
 }
 
 
-if __name__ == '__main__':
+def path_from_jason_to_video_path(name):
+    root = "/scratch/users/tang/data/niv"
+    video_name = name.split("/")[-1].split(".")[0]
+    video = name.split("/")[-1].split(".")[0] + ".mpg"
+    file = video_name.split("_")[0] + "_" + video_name.split("_")[1]
+    path = os.path.join(root, file, "videos", video)
+
+    return path
+
+
+def get_video_names_from_json(path):
+    """
+    read the json file and get the corresponding video path list
+    """
+    with open(path, 'r') as f:
+        data = json.load(f)
+    path_files = [path_from_jason_to_video_path(item['feature']) for item in data]
+
+    return path_files
+
+
+def process_for_trainset():
+    train_path = "/Users/tangwenwu/Documents/GitHub/Action_diffusion/action_diffusion/dataset/NIV/train70.json"
+    train_video_path_list = get_video_names_from_json(train_path)
+
     aug_times = 6  # how many times do you want to augment the data
     also_end = False
     if also_end:
         a = 'start_end'
     else:
         a = 'onlystart'
-    root_dir = '/scratch/users/tang/data/niv'
-    save_root_path = f'/scratch/users/tang/data/niv/processed_data_16_{a}_pooled_aug_x{aug_times}'
+    save_root_path = f'/scratch/users/tang/data/niv/train_16_{a}_pooled_aug_x{aug_times}'
     os.makedirs(save_root_path, exist_ok=True)
     model, tokenizer, aligner = MMPTModel.from_pretrained("./fairseq/examples/MMPT/projects/retri/videoclip/how2.yaml")
     model.eval()
-    train_video_paths, test_video_paths = get_video_path(root_dir)
+
     for i in range(aug_times):
-        for video_path in train_video_paths:
+        for video_path in train_video_path_list:
             data_list = []
             csv_path = get_csv_path_from_video_path(video_path)
             srt_path = get_srt_path_from_video_path(video_path)
@@ -482,7 +506,6 @@ if __name__ == '__main__':
 
                     # B, T, FPS, H, W, C (VideoCLIP is trained on 30 fps of s3d)
                     # video_frames = torch.randn(1, 1, 4, 224, 224, 3)
-
                     caps, cmasks = aligner._build_text_seq(
                         tokenizer(extracted_text, add_special_tokens=False)["input_ids"])
                     caps, cmasks = caps[None, :], cmasks[None, :]  # bsz=1
@@ -492,7 +515,8 @@ if __name__ == '__main__':
                         if also_end:
                             output2 = model(end_clip, caps, cmasks, return_score=False)
 
-                    start_video_feature, start_text_feature = output1["pooled_video"], output1["pooled_text"]  # torch.Size([1, 768])
+                    start_video_feature, start_text_feature = output1["pooled_video"], output1[
+                        "pooled_text"]  # torch.Size([1, 768])
                     start_video_feature_np = start_video_feature.cpu().numpy()
                     start_text_feature_np = start_text_feature.cpu().numpy()
 
@@ -526,6 +550,108 @@ if __name__ == '__main__':
             file_name = os.path.basename(video_path).split('.')[0] + f'_{i}' + '.npy'
             save_path = os.path.join(save_root_path, file_name)
             np.save(save_path, data_list)
+
+
+def process_for_testset():
+    test_path = "/Users/tangwenwu/Documents/GitHub/Action_diffusion/action_diffusion/dataset/NIV/test30.json"
+    test_video_path_list = get_video_names_from_json(test_path)
+
+    also_end = False
+    if also_end:
+        a = 'start_end'
+    else:
+        a = 'onlystart'
+
+    save_root_path = f'/scratch/users/tang/data/niv/test_data_16_{a}_pooled'
+    os.makedirs(save_root_path, exist_ok=True)
+    model, tokenizer, aligner = MMPTModel.from_pretrained("./fairseq/examples/MMPT/projects/retri/videoclip/how2.yaml")
+    model.eval()
+
+    for video_path in test_video_path_list:
+        data_list = []
+        csv_path = get_csv_path_from_video_path(video_path)
+        srt_path = get_srt_path_from_video_path(video_path)
+        if os.path.exists(csv_path):
+            file_name = os.path.basename(csv_path).split('.')[0]
+            print(file_name)
+            df = read_csv(csv_path)
+            subtitles = parse_srt(srt_path)
+
+            for index, row in df.iterrows():
+                action = row['Action']
+                steps_ids, task_id = class_list[action.strip()]["steps_ids"], class_list[action.strip()]["task_id"]
+                print(steps_ids, task_id)
+                start_seconds = math.floor(row['Start'])
+                end_seconds = math.ceil(row['End'])
+                extracted_text = get_subtitles_in_time_range(subtitles, start_seconds, end_seconds)
+                start_clip, end_clip = get_video_clip(video_path, start_seconds, end_seconds, num=16,
+                                                      also_end=also_end)
+                if start_clip.size == 0:  # or end_clip.size == 0:
+                    continue
+                start_clip = preprocess_frames(start_clip, augmentation=False)
+                if also_end:
+                    end_clip = preprocess_frames(end_clip, augmentation=False)
+                details = False
+                if details:
+                    print(f"Start: {start_seconds} seconds")
+                    print(f"End: {end_seconds} seconds")
+                    print(f"Extracted Text: {extracted_text}\n")
+
+                # B, T, FPS, H, W, C (VideoCLIP is trained on 30 fps of s3d)
+                # video_frames = torch.randn(1, 1, 4, 224, 224, 3)
+
+                caps, cmasks = aligner._build_text_seq(
+                    tokenizer(extracted_text, add_special_tokens=False)["input_ids"])
+                caps, cmasks = caps[None, :], cmasks[None, :]  # bsz=1
+
+                with torch.no_grad():
+                    output1 = model(start_clip, caps, cmasks, return_score=False)
+                    if also_end:
+                        output2 = model(end_clip, caps, cmasks, return_score=False)
+
+                start_video_feature, start_text_feature = output1["pooled_video"], output1[
+                    "pooled_text"]  # torch.Size([1, 768])
+                start_video_feature_np = start_video_feature.cpu().numpy()
+                start_text_feature_np = start_text_feature.cpu().numpy()
+
+                data_dict_start = {
+                    'file_name': file_name,
+                    'steps_ids': steps_ids,
+                    'task_id': task_id,
+                    'start_seconds': start_seconds,
+                    'end_seconds': end_seconds,
+                    'video_feature': start_video_feature_np,
+                    'text_feature': start_text_feature_np,
+                    'start_end': 0
+
+                }
+                data_list.append(data_dict_start)
+                if also_end:
+                    end_video_feature, end_text_feature = output2["video"], output2["text"]
+                    end_video_feature_np = end_video_feature.cpu().numpy()
+                    end_text_feature_np = end_text_feature.cpu().numpy()
+                    data_dict_end = {
+                        'file_name': file_name,
+                        'steps_ids': steps_ids,
+                        'task_id': task_id,
+                        'start_seconds': start_seconds,
+                        'end_seconds': end_seconds,
+                        'video_feature': end_video_feature_np,
+                        'text_feature': end_text_feature_np,
+                        'start_end': 1
+                    }
+                    data_list.append(data_dict_end)
+            file_name = os.path.basename(video_path).split('.')[0] + '.npy'
+            save_path = os.path.join(save_root_path, file_name)
+            np.save(save_path, data_list)
+
+
+if __name__ == '__main__':
+    process_for_testset()
+    print("finished test")
+    process_for_trainset()
+    print("finished train")
+
 
 
 
