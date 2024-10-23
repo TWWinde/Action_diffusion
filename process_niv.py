@@ -76,13 +76,19 @@ def read_videos_and_step_start_end(root_path):
 
 def get_video_path(root_path):
     action_list = ['changing_tire', 'coffee', 'cpr', 'jump_car', 'repot']
-    video_paths = []
+    train_video_paths = []
+    test_video_paths = []
     for action in action_list:
+        video_paths = []
         list = os.listdir(os.path.join(root_path, action, 'videos'))
         for item in list:
             video_paths.append(os.path.join(root_path, action, 'videos', item))
 
-    return video_paths
+        split_index = int(0.8 * len(video_paths))  # 计算前80%元素的索引
+        train_video_paths += video_paths[:split_index]  # 前80%的元素
+        test_video_paths += video_paths[split_index:]  # 剩下的20%元素
+
+    return train_video_paths, test_video_paths
 
 
 def get_csv_path_from_video_path(path):
@@ -181,7 +187,7 @@ def data_augmentation(video_array):
     return video_array
 
 
-def preprocess_frames(video_array, target_size=(224, 224), num=16):
+def preprocess_frames(video_array, target_size=(224, 224), num=16, augmentation=True):
     # Normalize the video frames to the range [-1, 1]
     video_array = (video_array / 255.0) * 2.0 - 1.0
     preprocessed_frames = []
@@ -193,8 +199,9 @@ def preprocess_frames(video_array, target_size=(224, 224), num=16):
 
     preprocessed_array = np.array(preprocessed_frames)  # (16, 224, 224, 3)
     num_frames = preprocessed_array.shape[0]
-    preprocessed_array = data_augmentation(preprocessed_array)
-
+    if augmentation:
+        preprocessed_array = data_augmentation(preprocessed_array)
+    
     #save_video(preprocessed_array, '/scratch/users/tang/fairseq/examples/MMPT/video.mp4', fps=30)
 
     # Pad the video frames to ensure the total number is a multiple of `num`
@@ -441,9 +448,9 @@ if __name__ == '__main__':
     os.makedirs(save_root_path, exist_ok=True)
     model, tokenizer, aligner = MMPTModel.from_pretrained("./fairseq/examples/MMPT/projects/retri/videoclip/how2.yaml")
     model.eval()
-    video_paths = get_video_path(root_dir)
+    train_video_paths, test_video_paths = get_video_path(root_dir)
     for i in range(aug_times):
-        for video_path in video_paths:
+        for video_path in train_video_paths:
             data_list = []
             csv_path = get_csv_path_from_video_path(video_path)
             srt_path = get_srt_path_from_video_path(video_path)
