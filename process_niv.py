@@ -459,7 +459,7 @@ def get_video_names_from_json(path):
 
 
 def process_for_trainset():
-    train_path = "/Users/tangwenwu/Documents/GitHub/Action_diffusion/action_diffusion/dataset/NIV/train70.json"
+    train_path = "/scratch/users/tang/Action_diffusion/action_diffusion/dataset/NIV/train70.json"
     train_video_path_list = get_video_names_from_json(train_path)
 
     aug_times = 6  # how many times do you want to augment the data
@@ -553,7 +553,7 @@ def process_for_trainset():
 
 
 def process_for_testset():
-    test_path = "/Users/tangwenwu/Documents/GitHub/Action_diffusion/action_diffusion/dataset/NIV/test30.json"
+    test_path = "/scratch/users/tang/Action_diffusion/action_diffusion/dataset/NIV/test30.json"
     test_video_path_list = get_video_names_from_json(test_path)
 
     also_end = False
