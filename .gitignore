@@ -1,0 +1,6 @@
+*.log
+/save_max_mlp/
+/save_max_mlp2/
+/log/
+/checkpoint_mlp/
+/log_mlp/
