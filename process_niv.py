@@ -441,7 +441,7 @@ def path_from_jason_to_video_path(name):
     root = "/scratch/users/tang/data/niv"
     video_name = name.split("/")[-1].split(".")[0]
     video = name.split("/")[-1].split(".")[0] + ".mpg"
-    file = video_name.split("_")[0] + "_" + video_name.split("_")[1]
+    file = video_name.replace(video_name.split("_")[-1], "")[:-1]
     path = os.path.join(root, file, "videos", video)
 
     return path
